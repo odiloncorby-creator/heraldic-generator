@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Blason générateur — vvd.world</title>
+<style>
+  html, body {
+    margin: 0;
+    background: #000;
+    color: #8A9AD4;
+    font-family: monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 24px;
+    box-sizing: border-box;
+  }
+  #blason-canvas {
+    max-width: 100%;
+    height: auto;
+    background: #000;
+  }
+  input, button {
+    background: #111;
+    color: #8A9AD4;
+    border: 1px solid #6B7EC4;
+    padding: 8px 12px;
+    font-family: monospace;
+    font-size: 14px;
+  }
+  input {
+    width: 320px;
+  }
+</style>
+</head>
+<body>
+  <input id="blason-input" type="text" placeholder="mot-clé ou phrase" autocomplete="off">
+  <canvas id="blason-canvas" width="1080" height="1350"></canvas>
+  <button id="blason-export">Exporter PNG</button>
+
+  <script id="blason-script">
+    function hashString(text) {
+      let hash = 5381;
+      for (let i = 0; i < text.length; i++) {
+        hash = ((hash << 5) + hash) + text.charCodeAt(i);
+        hash = hash >>> 0;
+      }
+      return hash >>> 0;
+    }
+
+    function mulberry32(seed) {
+      let a = seed >>> 0;
+      return function () {
+        a |= 0;
+        a = (a + 0x6D2B79F5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    if (typeof module !== 'undefined' && module.exports) {
+      module.exports = { hashString, mulberry32 };
+    }
+  </script>
+
+  <script id="blason-ui">
+  </script>
+</body>
+</html>
