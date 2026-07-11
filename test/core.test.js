@@ -43,3 +43,38 @@ test('mulberry32 produit des séquences différentes pour des seeds différents'
   const rngB = mulberry32(2);
   assert.notEqual(rngA(), rngB());
 });
+
+test('deriveParams est déterministe pour un même rng', () => {
+  const { mulberry32, deriveParams } = loadBlasonCore();
+  const paramsA = deriveParams(mulberry32(999));
+  const paramsB = deriveParams(mulberry32(999));
+  assert.deepEqual(paramsA, paramsB);
+});
+
+test('deriveParams choisit une symétrie valide', () => {
+  const { mulberry32, deriveParams } = loadBlasonCore();
+  const { symmetry } = deriveParams(mulberry32(1));
+  assert.ok(symmetry.type === 'axial' || symmetry.type === 'radial');
+  if (symmetry.type === 'radial') {
+    assert.ok([3, 4, 6, 8].includes(symmetry.k));
+  }
+});
+
+test('deriveParams génère entre 3 et 7 clusters', () => {
+  const { mulberry32, deriveParams } = loadBlasonCore();
+  for (let seed = 0; seed < 20; seed++) {
+    const { clusters } = deriveParams(mulberry32(seed));
+    assert.ok(clusters.length >= 3 && clusters.length <= 7, `seed ${seed}: ${clusters.length} clusters`);
+  }
+});
+
+test('deriveParams contraint chaque cluster dans le secteur de base', () => {
+  const { mulberry32, deriveParams } = loadBlasonCore();
+  for (let seed = 0; seed < 20; seed++) {
+    const { clusters, sectorAngle } = deriveParams(mulberry32(seed));
+    for (const cluster of clusters) {
+      assert.ok(cluster.angle >= 0 && cluster.angle < sectorAngle);
+      assert.ok(cluster.distance > 0 && cluster.distance <= 1);
+    }
+  }
+});

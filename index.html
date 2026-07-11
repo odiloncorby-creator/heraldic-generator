@@ -60,8 +60,35 @@
       };
     }
 
+    function deriveParams(rng) {
+      const symmetryOptions = [
+        { type: 'axial', k: 2 },
+        { type: 'radial', k: 3 },
+        { type: 'radial', k: 4 },
+        { type: 'radial', k: 6 },
+        { type: 'radial', k: 8 },
+      ];
+      const symmetry = symmetryOptions[Math.floor(rng() * symmetryOptions.length)];
+      const sectorAngle = symmetry.type === 'axial' ? Math.PI : (2 * Math.PI / symmetry.k);
+
+      const clusterCount = 3 + Math.floor(rng() * 5);
+      const clusters = [];
+      for (let i = 0; i < clusterCount; i++) {
+        clusters.push({
+          angle: rng() * sectorAngle,
+          distance: 0.15 + rng() * 0.75,
+          radius: 0.08 + rng() * 0.12,
+          particleCount: 200 + Math.floor(rng() * 400),
+        });
+      }
+
+      const jitter = 0.3 + rng() * 0.5;
+
+      return { symmetry, sectorAngle, clusters, jitter };
+    }
+
     if (typeof module !== 'undefined' && module.exports) {
-      module.exports = { hashString, mulberry32 };
+      module.exports = { hashString, mulberry32, deriveParams };
     }
   </script>
 
