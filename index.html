@@ -137,8 +137,33 @@
       return particles;
     }
 
+    function lerpColor(a, b, t) {
+      const result = [
+        Math.round(a[0] + (b[0] - a[0]) * t),
+        Math.round(a[1] + (b[1] - a[1]) * t),
+        Math.round(a[2] + (b[2] - a[2]) * t),
+      ];
+      return Object.setPrototypeOf(result, Object.getPrototypeOf(a));
+    }
+
+    function renderToCanvas(ctx, particles, width, height) {
+      const PALETTE_A = [0x6B, 0x7E, 0xC4];
+      const PALETTE_B = [0x8A, 0x9A, 0xD4];
+
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, width, height);
+
+      for (const particle of particles) {
+        const [r, g, b] = lerpColor(PALETTE_A, PALETTE_B, particle.colorT);
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${particle.alpha})`;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
     if (typeof module !== 'undefined' && module.exports) {
-      module.exports = { hashString, mulberry32, deriveParams, gaussianRandom, generateParticles };
+      module.exports = { hashString, mulberry32, deriveParams, gaussianRandom, generateParticles, lerpColor, renderToCanvas };
     }
   </script>
 

@@ -125,3 +125,17 @@ test('generateParticles duplique les clusters selon la symétrie (comptage exact
   const radialParticles = generateParticles(radialParams, rng2, 1080, 1350);
   assert.equal(radialParticles.length, 200); // 1 cluster * 4 branches * 50 particules
 });
+
+test('lerpColor interpole entre les deux couleurs de la palette', () => {
+  const { lerpColor } = loadBlasonCore();
+  const a = [0x6B, 0x7E, 0xC4];
+  const b = [0x8A, 0x9A, 0xD4];
+  assert.deepEqual(lerpColor(a, b, 0), a);
+  assert.deepEqual(lerpColor(a, b, 1), b);
+  const mid = lerpColor(a, b, 0.5);
+  assert.deepEqual(mid, [
+    Math.round((a[0] + b[0]) / 2),
+    Math.round((a[1] + b[1]) / 2),
+    Math.round((a[2] + b[2]) / 2),
+  ]);
+});
