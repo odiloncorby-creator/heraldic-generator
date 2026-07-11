@@ -78,3 +78,50 @@ test('deriveParams contraint chaque cluster dans le secteur de base', () => {
     }
   }
 });
+
+test('generateParticles est déterministe pour un même texte', () => {
+  const { hashString, mulberry32, deriveParams, generateParticles } = loadBlasonCore();
+  const run = () => {
+    const rng = mulberry32(hashString('kaldrek'));
+    const params = deriveParams(rng);
+    return generateParticles(params, rng, 1080, 1350);
+  };
+  assert.deepEqual(run(), run());
+});
+
+test('generateParticles reste dans les bornes du canvas (avec marge de jitter)', () => {
+  const { hashString, mulberry32, deriveParams, generateParticles } = loadBlasonCore();
+  const width = 1080, height = 1350;
+  const rng = mulberry32(hashString('un test de bornes'));
+  const params = deriveParams(rng);
+  const particles = generateParticles(params, rng, width, height);
+  assert.ok(particles.length > 0);
+  const margin = 400;
+  for (const particle of particles) {
+    assert.ok(particle.x >= -margin && particle.x <= width + margin);
+    assert.ok(particle.y >= -margin && particle.y <= height + margin);
+  }
+});
+
+test('generateParticles duplique les clusters selon la symétrie (comptage exact)', () => {
+  const { mulberry32, generateParticles } = loadBlasonCore();
+  const axialParams = {
+    symmetry: { type: 'axial', k: 2 },
+    sectorAngle: Math.PI,
+    jitter: 0.5,
+    clusters: [{ angle: 0.4, distance: 0.5, radius: 0.1, particleCount: 100 }],
+  };
+  const rng = mulberry32(42);
+  const particles = generateParticles(axialParams, rng, 1080, 1350);
+  assert.equal(particles.length, 200); // 1 cluster * 2 (mirroir) * 100 particules
+
+  const radialParams = {
+    symmetry: { type: 'radial', k: 4 },
+    sectorAngle: Math.PI / 2,
+    jitter: 0.5,
+    clusters: [{ angle: 0.2, distance: 0.5, radius: 0.1, particleCount: 50 }],
+  };
+  const rng2 = mulberry32(42);
+  const radialParticles = generateParticles(radialParams, rng2, 1080, 1350);
+  assert.equal(radialParticles.length, 200); // 1 cluster * 4 branches * 50 particules
+});

@@ -87,8 +87,58 @@
       return { symmetry, sectorAngle, clusters, jitter };
     }
 
+    function gaussianRandom(rng) {
+      let u = 0, v = 0;
+      while (u === 0) u = rng();
+      while (v === 0) v = rng();
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    }
+
+    function generateParticles(params, rng, width, height) {
+      const cx = width / 2;
+      const cy = height / 2;
+      const maxRadius = Math.min(width, height) * 0.42;
+      const particles = [];
+
+      for (const cluster of params.clusters) {
+        const baseAngle = cluster.angle - Math.PI / 2;
+        const baseX = cx + Math.cos(baseAngle) * cluster.distance * maxRadius;
+        const baseY = cy + Math.sin(baseAngle) * cluster.distance * maxRadius;
+
+        const centers = [];
+        if (params.symmetry.type === 'axial') {
+          centers.push([baseX, baseY]);
+          centers.push([2 * cx - baseX, baseY]);
+        } else {
+          for (let k = 0; k < params.symmetry.k; k++) {
+            const rotAngle = baseAngle + k * params.sectorAngle;
+            centers.push([
+              cx + Math.cos(rotAngle) * cluster.distance * maxRadius,
+              cy + Math.sin(rotAngle) * cluster.distance * maxRadius,
+            ]);
+          }
+        }
+
+        for (const [centerX, centerY] of centers) {
+          for (let p = 0; p < cluster.particleCount; p++) {
+            const r = Math.abs(gaussianRandom(rng)) * cluster.radius * maxRadius * params.jitter;
+            const theta = rng() * Math.PI * 2;
+            particles.push({
+              x: centerX + Math.cos(theta) * r,
+              y: centerY + Math.sin(theta) * r,
+              size: 1 + rng() * 2,
+              alpha: 0.3 + rng() * 0.7,
+              colorT: rng(),
+            });
+          }
+        }
+      }
+
+      return particles;
+    }
+
     if (typeof module !== 'undefined' && module.exports) {
-      module.exports = { hashString, mulberry32, deriveParams };
+      module.exports = { hashString, mulberry32, deriveParams, gaussianRandom, generateParticles };
     }
   </script>
 
