@@ -43,6 +43,44 @@ Chaque tâche est **auto-portante** : elle contient le code complet, les tests, 
 
 ---
 
+## Protocole anti-collision (fichier unique partagé) — À LIRE AVANT DE LANCER LES AGENTS
+
+**Toutes les tâches modifient le même fichier `terminal/index.html`.** Sans discipline, deux agents qui écrivent en même temps créent des conflits. Deux modes de travail ; choisis selon ton besoin :
+
+### Mode recommandé : SÉQUENTIEL dans le dossier `main` (zéro conflit)
+
+Le gain de tokens vient du **contexte isolé par agent** (chaque agent lit UNE tâche, pas tout le plan), **pas** du parallélisme en temps réel. Tu peux donc lancer les agents **l'un après l'autre** dans le même dossier et garder 100% du bénéfice tokens, sans aucun merge :
+
+1. T0 (attends son commit).
+2. Puis T1, T2, T3, T4, T6, T7 — un agent à la fois, chacun commit avant le suivant. Chaque tâche est minuscule (2–5 min).
+3. T5.
+4. T8, T9, T10, T11 — un à la fois.
+5. T12.
+
+Chaque agent démarre « frais » sur sa tâche → contexte minimal. C'est le mode le plus simple, surtout après ta mésaventure de worktree.
+
+### Mode avancé : PARALLÈLE via worktrees (gain wall-clock, merge à gérer)
+
+Si tu veux vraiment du parallélisme temps-réel :
+
+1. Après le commit T0, crée **un worktree par tâche** de la vague depuis le commit T0 :
+   `git worktree add ../wt-t1 -b task/t1 <sha-de-T0>` (etc. pour t2, t3, t4, t6, t7).
+2. Lance un agent par worktree.
+3. Réintègre **dans l'ordre**, un à la fois : `git merge task/t1`, puis `git merge task/t2`…
+
+**Grâce au pattern d'export incrémental (T0) et aux ancres, tout conflit résiduel est trivial :** deux tâches ont simplement *ajouté* un bloc de fonction + un `Object.assign` distinct au même endroit → la résolution est toujours « garder les deux blocs ». Jamais de logique à arbitrer.
+
+### Règles que TOUT agent doit respecter (rappelées dans chaque tâche)
+
+- **Insertion uniquement, jamais de réécriture.** Les fonctions pures s'ajoutent à l'ancre `<<< ANCHOR:PURE >>>` de `#blason-script` ; le câblage DOM à l'ancre `<<< ANCHOR:UI >>>` de `#blason-ui`. Ne jamais toucher au code d'une autre tâche.
+- **Export incrémental.** Partout où une tâche dit « **Étendre l'export : ajouter X** », cela signifie : ajouter, juste sous tes fonctions, la ligne
+  `if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { X });`
+  — **ne jamais éditer une ligne d'export existante** (c'est ce qui garantit la résolution triviale des conflits).
+- **Un seul `git add terminal/index.html` par tâche**, commit atomique à la fin (déjà spécifié dans chaque tâche).
+- **Ne pas éditer le DOM/CSS hors de ta tâche.** T8 ajoute le `<canvas>`, T9 le `<pre>` + son CSS, T10 le prompt + son CSS, T11 les boutons — chacun ajoute SES éléments, aucun ne modifie ceux d'un autre.
+
+---
+
 ## Task 0: Scaffold + constantes + utilitaires + harness de test
 
 **Files:**
@@ -118,13 +156,20 @@ Chaque tâche est **auto-portante** : elle contient le code complet, les tests, 
       return slug.length > 0 ? slug : 'blason';
     }
 
+    // Export incrémental : évite qu'une ligne d'export partagée soit éditée par
+    // plusieurs tâches (source de conflits). Chaque tâche AJOUTE son propre bloc
+    // Object.assign JUSTE après ses fonctions, à l'ancre PURE ci-dessous.
     if (typeof module !== 'undefined' && module.exports) {
-      module.exports = { COLS, ROWS, DOT_W, DOT_H, hashString, mulberry32, slugify };
+      Object.assign(module.exports, { COLS, ROWS, DOT_W, DOT_H, hashString, mulberry32, slugify });
     }
+
+    // <<< ANCHOR:PURE — T1–T7 insèrent ici (append uniquement, ne jamais réordonner).
+    //     Modèle par tâche : définir la/les fonction(s), puis, juste dessous :
+    //     if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { maFonction }); >>>
   </script>
 
   <script id="blason-ui">
-    // Câblage DOM ajouté en T8–T11.
+    // <<< ANCHOR:UI — T8–T11 insèrent leur câblage DOM ici (append uniquement). >>>
   </script>
 </body>
 </html>
@@ -311,11 +356,10 @@ Expected: FAIL — `deriveParams is not a function`.
     }
 ```
 
-Puis étendre l'export :
+Puis, juste sous ces fonctions (à l'ancre PURE), enregistrer les exports de façon incrémentale (cf Protocole anti-collision — ne jamais réécrire une ligne d'export existante) :
 
 ```js
-      module.exports = { COLS, ROWS, DOT_W, DOT_H, hashString, mulberry32, slugify,
-        makeEntropy, gaussianRandom, deriveParams };
+      if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { makeEntropy, gaussianRandom, deriveParams });
 ```
 
 - [ ] **Step 4: Lancer, vérifier vert**
