@@ -169,3 +169,11 @@ test('generateBlason : phrase longue traitée sans erreur', () => {
   const result = generateBlason(long, 1080, 1350);
   assert.ok(result.particles.length > 0);
 });
+
+test('slugify produit un nom de fichier sûr et non vide', () => {
+  const { slugify } = loadBlasonCore();
+  assert.equal(slugify('Sthol'), 'sthol');
+  assert.equal(slugify('Kaldrek le Renégat'), 'kaldrek-le-renegat');
+  assert.equal(slugify('   '), 'blason');
+  assert.ok(slugify('a'.repeat(200)).length <= 40);
+});

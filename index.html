@@ -169,8 +169,18 @@
       return { seed, params, particles };
     }
 
+    function slugify(text) {
+      const slug = text
+        .toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 40);
+      return slug.length > 0 ? slug : 'blason';
+    }
+
     if (typeof module !== 'undefined' && module.exports) {
-      module.exports = { hashString, mulberry32, deriveParams, gaussianRandom, generateParticles, lerpColor, renderToCanvas, generateBlason };
+      module.exports = { hashString, mulberry32, deriveParams, gaussianRandom, generateParticles, lerpColor, renderToCanvas, generateBlason, slugify };
     }
   </script>
 
@@ -199,6 +209,18 @@
     });
 
     renderFromText(input.value);
+
+    document.getElementById('blason-export').addEventListener('click', () => {
+      const text = input.value;
+      canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${slugify(text)}.png`;
+        link.click();
+        URL.revokeObjectURL(url);
+      }, 'image/png');
+    });
   </script>
 </body>
 </html>
