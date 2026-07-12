@@ -175,6 +175,30 @@
   </script>
 
   <script id="blason-ui">
+    const canvas = document.getElementById('blason-canvas');
+    const ctx = canvas.getContext('2d');
+    const input = document.getElementById('blason-input');
+    const WIDTH = canvas.width;
+    const HEIGHT = canvas.height;
+
+    let debounceHandle = null;
+
+    function renderFromText(text) {
+      if (text.trim().length === 0) {
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+        return;
+      }
+      const { particles } = generateBlason(text, WIDTH, HEIGHT);
+      renderToCanvas(ctx, particles, WIDTH, HEIGHT);
+    }
+
+    input.addEventListener('input', () => {
+      clearTimeout(debounceHandle);
+      debounceHandle = setTimeout(() => renderFromText(input.value), 150);
+    });
+
+    renderFromText(input.value);
   </script>
 </body>
 </html>
