@@ -212,6 +212,8 @@
 
     document.getElementById('blason-export').addEventListener('click', () => {
       const text = input.value;
+      clearTimeout(debounceHandle);
+      renderFromText(text);
       canvas.toBlob((blob) => {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
