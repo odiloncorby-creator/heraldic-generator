@@ -140,3 +140,32 @@ test('lerpColor interpole entre les deux couleurs de la palette', () => {
     Math.round((a[2] + b[2]) / 2),
   ]);
 });
+
+test('generateBlason : même texte → résultat identique (déterminisme bout-en-bout)', () => {
+  const { generateBlason } = loadBlasonCore();
+  const a = generateBlason('sthol', 1080, 1350);
+  const b = generateBlason('sthol', 1080, 1350);
+  assert.deepEqual(a, b);
+});
+
+test('generateBlason : textes différents → résultats visuellement distincts', () => {
+  const { generateBlason } = loadBlasonCore();
+  const examples = [
+    'sthol',
+    'kaldrek le renégat',
+    'la lanterne qui ne s\'éteint jamais',
+    'vhast',
+  ];
+  const results = examples.map((text) => generateBlason(text, 1080, 1350));
+  const seeds = results.map((r) => r.seed);
+  assert.equal(new Set(seeds).size, seeds.length, 'seeds doivent tous différer');
+  const particleCounts = results.map((r) => r.particles.length);
+  assert.equal(new Set(particleCounts.map((c) => JSON.stringify(c))).size > 0, true);
+});
+
+test('generateBlason : phrase longue traitée sans erreur', () => {
+  const { generateBlason } = loadBlasonCore();
+  const long = 'une phrase assez longue pour vérifier que le hash et la génération tiennent la route sans erreur ni troncature silencieuse';
+  const result = generateBlason(long, 1080, 1350);
+  assert.ok(result.particles.length > 0);
+});

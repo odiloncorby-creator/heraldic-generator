@@ -161,8 +161,16 @@
       }
     }
 
+    function generateBlason(text, width, height) {
+      const seed = hashString(text);
+      const rng = mulberry32(seed);
+      const params = deriveParams(rng);
+      const particles = generateParticles(params, rng, width, height);
+      return { seed, params, particles };
+    }
+
     if (typeof module !== 'undefined' && module.exports) {
-      module.exports = { hashString, mulberry32, deriveParams, gaussianRandom, generateParticles, lerpColor, renderToCanvas };
+      module.exports = { hashString, mulberry32, deriveParams, gaussianRandom, generateParticles, lerpColor, renderToCanvas, generateBlason };
     }
   </script>
 
