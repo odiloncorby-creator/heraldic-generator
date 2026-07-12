@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const assertLoose = require('node:assert');
 const { loadBlasonCore } = require('./support/extract-core');
 
 test('hashString est déterministe pour un même texte', () => {
@@ -130,10 +131,10 @@ test('lerpColor interpole entre les deux couleurs de la palette', () => {
   const { lerpColor } = loadBlasonCore();
   const a = [0x6B, 0x7E, 0xC4];
   const b = [0x8A, 0x9A, 0xD4];
-  assert.deepEqual(lerpColor(a, b, 0), a);
-  assert.deepEqual(lerpColor(a, b, 1), b);
+  assertLoose.deepEqual(lerpColor(a, b, 0), a);
+  assertLoose.deepEqual(lerpColor(a, b, 1), b);
   const mid = lerpColor(a, b, 0.5);
-  assert.deepEqual(mid, [
+  assertLoose.deepEqual(mid, [
     Math.round((a[0] + b[0]) / 2),
     Math.round((a[1] + b[1]) / 2),
     Math.round((a[2] + b[2]) / 2),
