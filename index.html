@@ -2,39 +2,88 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Blason générateur — vvd.world</title>
 <style>
+  :root {
+    --color-bg: #000;
+    --color-surface: #111;
+    --color-border: #6B7EC4;
+    --color-text: #8A9AD4;
+  }
   html, body {
     margin: 0;
-    background: #000;
-    color: #8A9AD4;
+    min-height: 100dvh;
+    background: var(--color-bg);
+    color: var(--color-text);
     font-family: monospace;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    justify-content: center;
+    gap: 16px;
     padding: 24px;
     box-sizing: border-box;
   }
   #blason-canvas {
     max-width: 100%;
+    max-height: calc(100dvh - 180px);
+    width: auto;
     height: auto;
-    background: #000;
+    background: var(--color-bg);
   }
   input, button {
-    background: #111;
-    color: #8A9AD4;
-    border: 1px solid #6B7EC4;
-    padding: 8px 12px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    padding: 12px;
     font-family: monospace;
-    font-size: 14px;
+    font-size: 16px;
+    min-height: 44px;
+    box-sizing: border-box;
   }
   input {
-    width: 320px;
+    width: 100%;
+    max-width: 320px;
+  }
+  button {
+    cursor: pointer;
+    transition: opacity 150ms ease-out, border-color 150ms ease-out;
+  }
+  button:hover:not(:disabled) {
+    border-color: var(--color-text);
+  }
+  button:active:not(:disabled) {
+    opacity: 0.7;
+  }
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  input:focus-visible, button:focus-visible {
+    outline: 2px solid var(--color-text);
+    outline-offset: 2px;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    button {
+      transition: none;
+    }
   }
 </style>
 </head>
 <body>
+  <label for="blason-input" class="sr-only">Mot-clé ou phrase à transformer en blason</label>
   <input id="blason-input" type="text" placeholder="mot-clé ou phrase" autocomplete="off">
   <canvas id="blason-canvas" width="1080" height="1350"></canvas>
   <button id="blason-export">Exporter PNG</button>
@@ -210,10 +259,13 @@
 
     renderFromText(input.value);
 
-    document.getElementById('blason-export').addEventListener('click', () => {
+    const exportButton = document.getElementById('blason-export');
+    exportButton.addEventListener('click', () => {
       const text = input.value;
       clearTimeout(debounceHandle);
       renderFromText(text);
+      exportButton.disabled = true;
+      exportButton.textContent = 'Export en cours…';
       canvas.toBlob((blob) => {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -221,6 +273,8 @@
         link.download = `${slugify(text)}.png`;
         link.click();
         URL.revokeObjectURL(url);
+        exportButton.disabled = false;
+        exportButton.textContent = 'Exporter PNG';
       }, 'image/png');
     });
   </script>
