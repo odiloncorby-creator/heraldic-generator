@@ -191,3 +191,28 @@ test('serializeAnsi: contient un escape truecolor et un reset', () => {
   const stripped = out.replace(/\x1b\[[0-9;]*m/g, '');
   assert.equal(stripped, 'ABC\n⠁⠀D');
 });
+
+test('escapeXml: échappe &, <, >', () => {
+  const { escapeXml } = loadBlasonCore();
+  assert.equal(escapeXml('a<b>&c'), 'a&lt;b&gt;&amp;c');
+});
+
+test('serializeSvg: enveloppe SVG + fond + dimensions', () => {
+  const { serializeSvg } = loadBlasonCore();
+  const svg = serializeSvg(FIXTURE_GRID, { cellW: 10, cellH: 20, fontSize: 18 });
+  assert.ok(svg.startsWith('<svg'));
+  assert.ok(svg.includes('width="30"'));   // 3 cols × 10
+  assert.ok(svg.includes('height="40"'));  // 2 rows × 20
+  assert.ok(svg.includes('fill="#0A0A0A"')); // fond
+  assert.ok(svg.trim().endsWith('</svg>'));
+});
+
+test('serializeSvg: dessine les glyphes non-blancs, saute le blank braille', () => {
+  const { serializeSvg } = loadBlasonCore();
+  const svg = serializeSvg(FIXTURE_GRID);
+  assert.ok(svg.includes('>A</text>'));
+  assert.ok(svg.includes('fill="#E61919"')); // couleur du 'A'
+  // le blank U+2800 (cellule [1][1]) ne doit PAS produire de <text> pour ce glyphe
+  const textCount = (svg.match(/<text /g) || []).length;
+  assert.equal(textCount, 5); // A B C ⠁ D (5 non-blancs sur 6 cellules)
+});
