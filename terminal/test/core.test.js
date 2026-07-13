@@ -127,3 +127,37 @@ test('dotFieldToBraille: cellule pleine = 0x28FF', () => {
   assert.equal(cells[0][0].char, '⣿');
   assert.equal(cells[0][0].intensity, 1);
 });
+
+function blankGrid(core, cols, rows) {
+  return core.dotFieldToBraille(new Float64Array(cols * 2 * rows * 4), cols, rows);
+}
+
+test('overlayStructural frame=box: coins et bords', () => {
+  const core = loadBlasonCore();
+  const cells = blankGrid(core, 80, 50);
+  const meta = { seed: 0x7F3A, rev: '2.6', unit: 'UNIT/D-01' };
+  core.overlayStructural(cells, { frame: 'box' }, meta);
+  assert.equal(cells[0][0].char, '┌');
+  assert.equal(cells[0][79].char, '┐');
+  assert.equal(cells[49][0].char, '└');
+  assert.equal(cells[49][79].char, '┘');
+  assert.equal(cells[0][0].layer, 'struct');
+});
+
+test('overlayStructural: ligne data contient le SEED en hex et layer=data', () => {
+  const core = loadBlasonCore();
+  const cells = blankGrid(core, 80, 50);
+  core.overlayStructural(cells, { frame: 'box' }, { seed: 0x7F3A, rev: '2.6', unit: 'UNIT/D-01' });
+  const dataRow = cells[48].map(c => c.char).join('');
+  assert.ok(dataRow.includes('SEED 0x'));
+  assert.ok(dataRow.includes('00007F3A'));
+  const hasDataLayer = cells[48].some(c => c.layer === 'data');
+  assert.ok(hasDataLayer);
+});
+
+test('overlayStructural frame=ticks: pas de bordure pleine', () => {
+  const core = loadBlasonCore();
+  const cells = blankGrid(core, 80, 50);
+  core.overlayStructural(cells, { frame: 'ticks' }, { seed: 1, rev: '2.6', unit: 'U' });
+  assert.equal(cells[0][0].char, '+'); // tick au coin
+});
