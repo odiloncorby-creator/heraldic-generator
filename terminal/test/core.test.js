@@ -216,3 +216,53 @@ test('serializeSvg: dessine les glyphes non-blancs, saute le blank braille', () 
   const textCount = (svg.match(/<text /g) || []).length;
   assert.equal(textCount, 5); // A B C ⠁ D (5 non-blancs sur 6 cellules)
 });
+
+test('colorize: couleurs par layer', () => {
+  const core = loadBlasonCore();
+  const cells = [[
+    { char: '⣿', intensity: 1, layer: 'braille' },
+    { char: '│', intensity: 1, layer: 'struct' },
+    { char: 'S', intensity: 1, layer: 'data' },
+  ]];
+  const grid = core.colorize(cells, { paletteBias: 0.5 });
+  assert.equal(grid.cells[0][2].color, '#E61919');   // data = rouge
+  assert.equal(grid.cells[0][1].color, '#8A9AD4');   // struct = bleu clair
+  assert.ok(/^rgb\(/.test(grid.cells[0][0].color));  // braille = rgb(...)
+});
+
+test('buildGrid: grille complète bien formée', () => {
+  const { buildGrid, COLS, ROWS } = loadBlasonCore();
+  const grid = buildGrid('sthol', 0xABCDEF01);
+  assert.equal(grid.cols, COLS);
+  assert.equal(grid.rows, ROWS);
+  assert.equal(grid.cells.length, ROWS);
+  assert.equal(grid.cells[0].length, COLS);
+  assert.equal(grid.seed, (grid.seed >>> 0));
+  assert.ok(grid.cells.every(row => row.every(c => typeof c.color === 'string')));
+});
+
+test('buildGrid: déterministe pour (texte, entropy) fixés', () => {
+  const { buildGrid } = loadBlasonCore();
+  const a = buildGrid('sthol', 42);
+  const b = buildGrid('sthol', 42);
+  const flat = g => g.cells.map(r => r.map(c => c.char).join('')).join('\n');
+  assert.equal(flat(a), flat(b));
+});
+
+test('buildGrid: vrai hasard — entropies différentes = grilles différentes', () => {
+  const { buildGrid } = loadBlasonCore();
+  const flat = g => g.cells.map(r => r.map(c => c.char).join('')).join('\n');
+  assert.notEqual(flat(buildGrid('sthol', 1)), flat(buildGrid('sthol', 2)));
+});
+
+test('buildGrid: même mot = même seed de famille (symétrie stable)', () => {
+  const { buildGrid, hashString, mulberry32, deriveParams } = loadBlasonCore();
+  const expected = deriveParams(mulberry32(hashString('sthol')), mulberry32(1)).symmetry;
+  // la symétrie ne dépend que de familyRng(hashString(texte)) → stable quel que soit entropy
+  const g1 = buildGrid('sthol', 111);
+  const g2 = buildGrid('sthol', 222);
+  // pas d'accès direct aux params depuis grid : on vérifie via la stabilité de la famille
+  // en comparant la structure de cadre (frame dépend de familyRng)
+  const frameChar = g => g.cells[0][0].char;
+  assert.equal(frameChar(g1), frameChar(g2));
+});
