@@ -70,6 +70,45 @@
     // <<< ANCHOR:PURE — T1–T7 insèrent ici (append uniquement, ne jamais réordonner).
     //     Modèle par tâche : définir la/les fonction(s), puis, juste dessous :
     //     if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { maFonction }); >>>
+
+    // T3: Champ de points → grille braille
+    // Disposition des points braille (Unicode) par [dy][dx] :
+    //   dot1 dot4      0x01 0x08
+    //   dot2 dot5      0x02 0x10
+    //   dot3 dot6      0x04 0x20
+    //   dot7 dot8      0x40 0x80
+    const BRAILLE_BITS = [
+      [0x01, 0x08],
+      [0x02, 0x10],
+      [0x04, 0x20],
+      [0x40, 0x80],
+    ];
+
+    function dotFieldToBraille(dotField, cols, rows, threshold) {
+      if (threshold === undefined) threshold = 0.12;
+      const dotW = cols * 2;
+      const cells = [];
+      for (let ry = 0; ry < rows; ry++) {
+        const row = [];
+        for (let cx = 0; cx < cols; cx++) {
+          let bits = 0, sum = 0;
+          for (let dy = 0; dy < 4; dy++) {
+            for (let dx = 0; dx < 2; dx++) {
+              const v = dotField[(ry * 4 + dy) * dotW + (cx * 2 + dx)];
+              sum += v;
+              if (v > threshold) bits |= BRAILLE_BITS[dy][dx];
+            }
+          }
+          row.push({ char: String.fromCharCode(0x2800 + bits), intensity: sum / 8, layer: 'braille' });
+        }
+        cells.push(row);
+      }
+      return cells;
+    }
+
+    if (typeof module !== 'undefined' && module.exports) {
+      Object.assign(module.exports, { dotFieldToBraille });
+    }
   </script>
 
   <script id="blason-ui">
