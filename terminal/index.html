@@ -70,6 +70,34 @@
     // <<< ANCHOR:PURE — T1–T7 insèrent ici (append uniquement, ne jamais réordonner).
     //     Modèle par tâche : définir la/les fonction(s), puis, juste dessous :
     //     if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { maFonction }); >>>
+
+    function escapeXml(s) {
+      return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function serializeSvg(grid, opts) {
+      opts = opts || {};
+      const cw = opts.cellW || 13.5, ch = opts.cellH || 27, fs = opts.fontSize || 24;
+      const w = grid.cols * cw, h = grid.rows * ch;
+      let out = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`;
+      out += `<rect width="${w}" height="${h}" fill="#0A0A0A"/>`;
+      out += `<g font-family="monospace" font-size="${fs}" xml:space="preserve">`;
+      for (let r = 0; r < grid.rows; r++) {
+        const y = ((r + 0.8) * ch).toFixed(1);
+        for (let c = 0; c < grid.cols; c++) {
+          const cell = grid.cells[r][c];
+          if (cell.char === ' ' || cell.char === '⠀') continue;
+          const x = (c * cw).toFixed(1);
+          out += `<text x="${x}" y="${y}" fill="${cell.color}">${escapeXml(cell.char)}</text>`;
+        }
+      }
+      out += `</g></svg>`;
+      return out;
+    }
+
+    if (typeof module !== 'undefined' && module.exports) {
+      Object.assign(module.exports, { escapeXml, serializeSvg });
+    }
   </script>
 
   <script id="blason-ui">
