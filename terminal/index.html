@@ -67,6 +67,54 @@
       Object.assign(module.exports, { COLS, ROWS, DOT_W, DOT_H, hashString, mulberry32, slugify });
     }
 
+
+    function makeEntropy() {
+      // Vrai aléa — SEUL usage de crypto, côté runtime. Non couvert par les tests
+      // (buildGrid reçoit une entropy explicite pour rester déterministe en test).
+      return crypto.getRandomValues(new Uint32Array(1))[0] >>> 0;
+    }
+
+    function gaussianRandom(rng) {
+      let u = 0, v = 0;
+      while (u === 0) u = rng();
+      while (v === 0) v = rng();
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    }
+
+    function deriveParams(familyRng, variantRng) {
+      // MACRO (stable par texte) — piloté par familyRng
+      const symmetryOptions = [
+        { type: 'axial', k: 2 },
+        { type: 'radial', k: 3 },
+        { type: 'radial', k: 4 },
+        { type: 'radial', k: 6 },
+        { type: 'radial', k: 8 },
+      ];
+      const symmetry = symmetryOptions[Math.floor(familyRng() * symmetryOptions.length)];
+      const sectorAngle = symmetry.type === 'axial' ? Math.PI : (2 * Math.PI / symmetry.k);
+      const paletteBias = familyRng();
+      const densityBand = 0.6 + familyRng() * 0.8;
+      const frames = ['brackets', 'box', 'ticks'];
+      const frame = frames[Math.floor(familyRng() * frames.length)];
+
+      // MICRO (variable par tirage) — piloté par variantRng
+      const clusterCount = 3 + Math.floor(variantRng() * 5); // 3..7
+      const clusters = [];
+      for (let i = 0; i < clusterCount; i++) {
+        clusters.push({
+          angle: variantRng() * sectorAngle,
+          distance: 0.15 + variantRng() * 0.75,
+          radius: 0.08 + variantRng() * 0.12,
+          particleCount: Math.floor((120 + variantRng() * 260) * densityBand),
+        });
+      }
+      const jitter = 0.3 + variantRng() * 0.5;
+
+      return { symmetry, sectorAngle, clusters, jitter, paletteBias, densityBand, frame };
+    }
+
+    if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { makeEntropy, gaussianRandom, deriveParams });
+
     // <<< ANCHOR:PURE — T1–T7 insèrent ici (append uniquement, ne jamais réordonner).
     //     Modèle par tâche : définir la/les fonction(s), puis, juste dessous :
     //     if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { maFonction }); >>>
