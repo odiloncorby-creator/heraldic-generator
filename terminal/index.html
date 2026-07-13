@@ -70,6 +70,54 @@
     // <<< ANCHOR:PURE — T1–T7 insèrent ici (append uniquement, ne jamais réordonner).
     //     Modèle par tâche : définir la/les fonction(s), puis, juste dessous :
     //     if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { maFonction }); >>>
+
+    function generateParticles(params, rng, width, height) {
+      const cx = width / 2, cy = height / 2;
+      const maxRadius = Math.min(width, height) * 0.42;
+      const particles = [];
+      for (const cluster of params.clusters) {
+        const baseAngle = cluster.angle - Math.PI / 2;
+        const baseX = cx + Math.cos(baseAngle) * cluster.distance * maxRadius;
+        const baseY = cy + Math.sin(baseAngle) * cluster.distance * maxRadius;
+        const centers = [];
+        if (params.symmetry.type === 'axial') {
+          centers.push([baseX, baseY]);
+          centers.push([2 * cx - baseX, baseY]);
+        } else {
+          for (let k = 0; k < params.symmetry.k; k++) {
+            const rot = baseAngle + k * params.sectorAngle;
+            centers.push([
+              cx + Math.cos(rot) * cluster.distance * maxRadius,
+              cy + Math.sin(rot) * cluster.distance * maxRadius,
+            ]);
+          }
+        }
+        for (const [ccx, ccy] of centers) {
+          for (let p = 0; p < cluster.particleCount; p++) {
+            const r = Math.abs(gaussianRandom(rng)) * cluster.radius * maxRadius * params.jitter;
+            const theta = rng() * Math.PI * 2;
+            particles.push({ x: ccx + Math.cos(theta) * r, y: ccy + Math.sin(theta) * r });
+          }
+        }
+      }
+      return particles;
+    }
+
+    function rasterizeToDotField(particles, dotW, dotH) {
+      const field = new Float64Array(dotW * dotH);
+      for (const pt of particles) {
+        const x = Math.round(pt.x), y = Math.round(pt.y);
+        if (x >= 0 && x < dotW && y >= 0 && y < dotH) field[y * dotW + x] += 1;
+      }
+      let max = 0;
+      for (let i = 0; i < field.length; i++) if (field[i] > max) max = field[i];
+      if (max > 0) for (let i = 0; i < field.length; i++) field[i] /= max;
+      return field;
+    }
+
+    if (typeof module !== 'undefined' && module.exports) {
+      Object.assign(module.exports, { generateParticles, rasterizeToDotField });
+    }
   </script>
 
   <script id="blason-ui">
