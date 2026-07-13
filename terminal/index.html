@@ -18,11 +18,37 @@
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 16px; padding: 24px; box-sizing: border-box;
   }
-  /* UI détaillée en T10 */
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+  #blason-prompt { display: flex; align-items: center; gap: 8px; width: 100%; max-width: 520px; }
+  #blason-prompt span { color: var(--color-a); white-space: nowrap; }
+  #blason-input {
+    flex: 1; background: var(--color-bg); color: var(--color-b);
+    border: 1px solid var(--color-a); padding: 10px; font-family: monospace;
+    font-size: 16px; min-height: 44px; box-sizing: border-box;
+  }
+  #blason-input:focus-visible { outline: 2px solid var(--color-b); outline-offset: 2px; }
+  button {
+    background: var(--color-bg); color: var(--color-b); border: 1px solid var(--color-a);
+    padding: 10px 14px; font-family: monospace; font-size: 14px; min-height: 44px;
+    cursor: pointer; text-transform: uppercase;
+  }
+  button:hover:not(:disabled) { border-color: var(--color-b); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button:focus-visible { outline: 2px solid var(--color-b); outline-offset: 2px; }
 </style>
 </head>
 <body>
-  <!-- DOM détaillé en T10 -->
+  <div id="blason-prompt">
+    <label for="blason-input" class="sr-only">Mot-clé ou phrase à transformer en blason</label>
+    <span aria-hidden="true">heraldic@vvd:~$</span>
+    <input id="blason-input" type="text" placeholder="tape un mot puis Entrée" autocomplete="off" spellcheck="false">
+  </div>
+  <div id="blason-actions">
+    <button id="blason-reroll" type="button">[ RE-ROLL ]</button>
+  </div>
 
   <script id="blason-script">
     const COLS = 80;
@@ -352,6 +378,40 @@
 
   <script id="blason-ui">
     // <<< ANCHOR:UI — T8–T11 insèrent leur câblage DOM ici (append uniquement). >>>
+    const input = document.getElementById('blason-input');
+    const out = document.getElementById('blason-out');
+    const rerollBtn = document.getElementById('blason-reroll');
+
+    let currentText = '';
+    let currentEntropy = 0;
+    let currentGrid = null;
+
+    function generate(text, entropy) {
+      currentText = text;
+      currentEntropy = entropy >>> 0;
+      currentGrid = buildGrid(text, currentEntropy);
+      renderDecode(currentGrid, out);
+    }
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const text = input.value.trim();
+        if (text.length === 0) return;
+        generate(text, makeEntropy());
+      }
+    });
+
+    rerollBtn.addEventListener('click', () => {
+      if (currentText.length === 0) return;
+      generate(currentText, makeEntropy());
+    });
+
+    // Raccourci clavier 'R' pour reroll (hors focus input)
+    document.addEventListener('keydown', (e) => {
+      if ((e.key === 'r' || e.key === 'R') && document.activeElement !== input) {
+        if (currentText.length > 0) generate(currentText, makeEntropy());
+      }
+    });
   </script>
 </body>
 </html>
