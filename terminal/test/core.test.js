@@ -94,3 +94,36 @@ test('rasterizeToDotField: ignore les points hors champ', () => {
   let sum = 0; for (const v of field) sum += v;
   assert.equal(sum, 0);
 });
+
+test('dotFieldToBraille: dimensions de la grille', () => {
+  const { dotFieldToBraille } = loadBlasonCore();
+  const field = new Float64Array(160 * 200);
+  const cells = dotFieldToBraille(field, 80, 50);
+  assert.equal(cells.length, 50);
+  assert.equal(cells[0].length, 80);
+});
+
+test('dotFieldToBraille: champ vide = blank braille U+2800', () => {
+  const { dotFieldToBraille } = loadBlasonCore();
+  const cells = dotFieldToBraille(new Float64Array(160 * 200), 80, 50);
+  assert.equal(cells[0][0].char, '⠀');
+  assert.equal(cells[0][0].intensity, 0);
+  assert.equal(cells[0][0].layer, 'braille');
+});
+
+test('dotFieldToBraille: point haut-gauche allume dot1 (0x2801)', () => {
+  const { dotFieldToBraille } = loadBlasonCore();
+  const field = new Float64Array(160 * 200);
+  field[0] = 1; // sous-point (0,0) de la cellule (0,0)
+  const cells = dotFieldToBraille(field, 80, 50);
+  assert.equal(cells[0][0].char, '⠁'); // dot1
+});
+
+test('dotFieldToBraille: cellule pleine = 0x28FF', () => {
+  const { dotFieldToBraille } = loadBlasonCore();
+  const field = new Float64Array(160 * 200);
+  for (let dy = 0; dy < 4; dy++) for (let dx = 0; dx < 2; dx++) field[dy * 160 + dx] = 1;
+  const cells = dotFieldToBraille(field, 80, 50);
+  assert.equal(cells[0][0].char, '⣿');
+  assert.equal(cells[0][0].intensity, 1);
+});
