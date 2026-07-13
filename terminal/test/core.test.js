@@ -161,3 +161,33 @@ test('overlayStructural frame=ticks: pas de bordure pleine', () => {
   core.overlayStructural(cells, { frame: 'ticks' }, { seed: 1, rev: '2.6', unit: 'U' });
   assert.equal(cells[0][0].char, '+'); // tick au coin
 });
+
+const FIXTURE_GRID = { cols: 3, rows: 2, cells: [
+  [{ char: 'A', color: '#E61919', layer: 'data' },
+   { char: 'B', color: '#8A9AD4', layer: 'struct' },
+   { char: 'C', color: 'rgb(107, 126, 196)', layer: 'braille' }],
+  [{ char: '⠁', color: 'rgb(120, 130, 200)', layer: 'braille' },
+   { char: '⠀', color: 'rgb(107, 126, 196)', layer: 'braille' },
+   { char: 'D', color: '#8A9AD4', layer: 'struct' }],
+], seed: 42, meta: { rev: '2.6', unit: 'U' } };
+
+test('serializeText: lignes jointes, glyphes bruts', () => {
+  const { serializeText } = loadBlasonCore();
+  assert.equal(serializeText(FIXTURE_GRID), 'ABC\n⠁⠀D');
+});
+
+test('parseColor: hex et rgb()', () => {
+  const { parseColor } = loadBlasonCore();
+  assertLoose.deepEqual(parseColor('#E61919'), [230, 25, 25]);
+  assertLoose.deepEqual(parseColor('rgb(107, 126, 196)'), [107, 126, 196]);
+});
+
+test('serializeAnsi: contient un escape truecolor et un reset', () => {
+  const { serializeAnsi } = loadBlasonCore();
+  const out = serializeAnsi(FIXTURE_GRID);
+  assert.ok(out.includes('\x1b[38;2;230;25;25m')); // rouge hazard du 'A'
+  assert.ok(out.includes('\x1b[0m'));
+  // le texte visible (hors escapes) reste lisible
+  const stripped = out.replace(/\x1b\[[0-9;]*m/g, '');
+  assert.equal(stripped, 'ABC\n⠁⠀D');
+});
