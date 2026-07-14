@@ -34,6 +34,7 @@ cœur pur (`buildGrid`, serializers) est déjà portable par construction
 | Pas de commande `/help` | `/help` liste les commandes disponibles | Découvrabilité, demande explicite |
 | Pas de banner d'ouverture | Banner ASCII fixe (box-drawing) + tagline/version au-dessus du prompt | Effet « programme qui s'ouvre » |
 | Une seule ligne de sortie (le rendu) | Log scrollback : chaque ligne tapée + sa réponse s'empilent | Vrai comportement terminal, historique consultable |
+| Prompt `heraldic@vvd:~$` | Prompt `heraldic:~$` | Sortie de l'inspiration/branding vvd.world pour cette variante, demande explicite |
 
 ## 3. Layout
 
@@ -43,10 +44,10 @@ cœur pur (`buildGrid`, serializers) est déjà portable par construction
 │  titre + tagline + version               │
 ├─────────────────────────────────────────┤
 │ LOG scrollback                           │  s'accumule : chaque ligne tapée
-│  heraldic@vvd:~$ chateau                 │  (commande ou texte libre) + la
-│  heraldic@vvd:~$ /help                   │  réponse associée si applicable
+│  heraldic:~$ chateau                     │  (commande ou texte libre) + la
+│  heraldic:~$ /help                       │  réponse associée si applicable
 │  commandes: /reroll /export <fmt> /clear │  (help text, erreur, rien pour
-│  heraldic@vvd:~$ ▊ (input actif ici)     │  une génération réussie)
+│  heraldic:~$ ▊ (input actif ici)         │  une génération réussie)
 ├─────────────────────────────────────────┤
 │ ART — grille braille/ASCII générée       │  remplacée à chaque génération/
 │  (inchangé : pipeline buildGrid)         │  reroll, animation decode conservée
@@ -115,12 +116,12 @@ multi-lignes transcrit à la main est exactement le type de contenu fragile
 s'ouvre » sans ce risque.
 
 Exemple de forme (contenu exact ajustable à l'implémentation, dans le même
-esprit) :
+esprit — plus de référence vvd.world/odilon.wav sur cette variante, tagline
+à finaliser à l'implémentation) :
 
 ```
 ┌──────────────────────────────┐
 │  HERALDIC TERMINAL            │
-│  vvd.world × odilon.wav       │
 │  v2.6 — tape /help            │
 └──────────────────────────────┘
 ```
