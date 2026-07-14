@@ -476,40 +476,28 @@
 
     const input = document.getElementById('blason-input');
     const out = document.getElementById('blason-out');
-    const rerollBtn = document.getElementById('blason-reroll');
+    const logEl = document.getElementById('blason-log');
+    const seedEl = document.getElementById('blason-seed');
 
     let currentText = '';
     let currentEntropy = 0;
     let currentGrid = null;
+
+    function logLine(text, opts) {
+      const div = document.createElement('div');
+      if (opts && opts.error) div.className = 'log-error';
+      div.textContent = text;
+      logEl.appendChild(div);
+    }
 
     function generate(text, entropy) {
       currentText = text;
       currentEntropy = entropy >>> 0;
       currentGrid = buildGrid(text, currentEntropy);
       renderDecode(currentGrid, out);
+      seedEl.textContent = formatSeedLine(currentGrid.meta);
     }
 
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        const text = input.value.trim();
-        if (text.length === 0) return;
-        generate(text, makeEntropy());
-      }
-    });
-
-    rerollBtn.addEventListener('click', () => {
-      if (currentText.length === 0) return;
-      generate(currentText, makeEntropy());
-    });
-
-    // Raccourci clavier 'R' pour reroll (hors focus input)
-    document.addEventListener('keydown', (e) => {
-      if ((e.key === 'r' || e.key === 'R') && document.activeElement !== input) {
-        if (currentText.length > 0) generate(currentText, makeEntropy());
-      }
-    });
-
-    // T11: Câblage des 4 exports
     function downloadBlob(blob, filename) {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -519,36 +507,81 @@
       URL.revokeObjectURL(url);
     }
 
+    const EXPORT_FORMATS = ['png', 'txt', 'copy', 'ans', 'svg'];
+
+    function runExport(fmt) {
+      if (fmt === 'png') {
+        const cv = document.getElementById('blason-canvas');
+        renderToCanvas(cv.getContext('2d'), currentGrid, cv.width, cv.height);
+        cv.toBlob((blob) => downloadBlob(blob, `${slugify(currentText)}.png`), 'image/png');
+      } else if (fmt === 'copy') {
+        navigator.clipboard.writeText(serializeText(currentGrid));
+      } else if (fmt === 'txt') {
+        downloadBlob(new Blob([serializeText(currentGrid)], { type: 'text/plain' }), `${slugify(currentText)}.txt`);
+      } else if (fmt === 'ans') {
+        downloadBlob(new Blob([serializeAnsi(currentGrid)], { type: 'text/plain' }), `${slugify(currentText)}.ans`);
+      } else if (fmt === 'svg') {
+        downloadBlob(new Blob([serializeSvg(currentGrid)], { type: 'image/svg+xml' }), `${slugify(currentText)}.svg`);
+      }
+    }
+
     function requireGrid() {
-      if (!currentGrid) { alert('Génère un blason d’abord (tape un mot + Entrée).'); return false; }
+      if (!currentGrid) {
+        logLine(`aucun blason généré — tape un mot d’abord`, { error: true });
+        return false;
+      }
       return true;
     }
 
-    document.getElementById('export-png').addEventListener('click', () => {
-      if (!requireGrid()) return;
-      const cv = document.getElementById('blason-canvas');
-      renderToCanvas(cv.getContext('2d'), currentGrid, cv.width, cv.height);
-      cv.toBlob((blob) => downloadBlob(blob, `${slugify(currentText)}.png`), 'image/png');
-    });
+    const COMMANDS = {
+      help() {
+        logLine([
+          'commandes disponibles :',
+          '  <texte>              génère un blason à partir du texte',
+          '  /reroll              nouveau tirage du même texte',
+          '  /export <fmt>        exporte le dernier blason (fmt: png, txt, copy, ans, svg)',
+          '  /clear                vide l’historique affiché',
+          '  /help                 affiche cette liste',
+        ].join('\n'));
+      },
+      reroll() {
+        if (!requireGrid()) return;
+        generate(currentText, makeEntropy());
+      },
+      clear() {
+        logEl.innerHTML = '';
+      },
+    };
 
-    document.getElementById('export-copy').addEventListener('click', async () => {
+    function handleExport(arg) {
+      if (!arg || !EXPORT_FORMATS.includes(arg)) {
+        logLine(`format invalide — formats: ${EXPORT_FORMATS.join(', ')}`, { error: true });
+        return;
+      }
       if (!requireGrid()) return;
-      await navigator.clipboard.writeText(serializeText(currentGrid));
-    });
+      runExport(arg);
+    }
 
-    document.getElementById('export-txt').addEventListener('click', () => {
-      if (!requireGrid()) return;
-      downloadBlob(new Blob([serializeText(currentGrid)], { type: 'text/plain' }), `${slugify(currentText)}.txt`);
-    });
+    function handleLine(raw) {
+      const text = raw.trim();
+      if (text.length === 0) return;
+      logLine(`heraldic:~$ ${raw}`);
+      if (text[0] === '/') {
+        const [name, ...rest] = text.slice(1).split(/\s+/);
+        const key = name.toLowerCase();
+        if (key === 'export') { handleExport(rest[0] ? rest[0].toLowerCase() : undefined); return; }
+        if (COMMANDS[key]) { COMMANDS[key](); return; }
+        logLine(`commande inconnue: /${name} — tape /help`, { error: true });
+        return;
+      }
+      generate(text, makeEntropy());
+    }
 
-    document.getElementById('export-ans').addEventListener('click', () => {
-      if (!requireGrid()) return;
-      downloadBlob(new Blob([serializeAnsi(currentGrid)], { type: 'text/plain' }), `${slugify(currentText)}.ans`);
-    });
-
-    document.getElementById('export-svg').addEventListener('click', () => {
-      if (!requireGrid()) return;
-      downloadBlob(new Blob([serializeSvg(currentGrid)], { type: 'image/svg+xml' }), `${slugify(currentText)}.svg`);
+    input.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      const raw = input.value;
+      input.value = '';
+      handleLine(raw);
     });
   </script>
 </body>
