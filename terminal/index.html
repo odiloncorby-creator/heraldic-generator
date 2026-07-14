@@ -426,10 +426,13 @@
       pre.innerHTML = html;
     }
 
+    let decodeGeneration = 0;
+
     function renderDecode(grid, pre) {
       const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reduce) { renderToDom(grid, pre); return; }
 
+      const myGeneration = ++decodeGeneration;
       const SCRAMBLE = '⠿⣿⢿⡿⣻⠷█▓▒░/\\|+°';
       const rng = mulberry32(grid.seed >>> 0);
       const cx = grid.cols / 2, cy = grid.rows / 2;
@@ -438,6 +441,7 @@
       const start = performance.now();
 
       function frame(now) {
+        if (myGeneration !== decodeGeneration) return; // une génération plus récente a pris le relais
         const t = now - start;
         let done = true;
         let html = '';
