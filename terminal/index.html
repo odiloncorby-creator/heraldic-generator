@@ -56,6 +56,11 @@
   </div>
   <div id="blason-actions">
     <button id="blason-reroll" type="button">[ RE-ROLL ]</button>
+    <button id="export-png" type="button">PNG</button>
+    <button id="export-copy" type="button">COPIER TXT</button>
+    <button id="export-txt" type="button">.TXT</button>
+    <button id="export-ans" type="button">.ANS</button>
+    <button id="export-svg" type="button">.SVG</button>
   </div>
 
   <script id="blason-script">
@@ -494,6 +499,48 @@
       if ((e.key === 'r' || e.key === 'R') && document.activeElement !== input) {
         if (currentText.length > 0) generate(currentText, makeEntropy());
       }
+    });
+
+    // T11: Câblage des 4 exports
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function requireGrid() {
+      if (!currentGrid) { alert('Génère un blason d’abord (tape un mot + Entrée).'); return false; }
+      return true;
+    }
+
+    document.getElementById('export-png').addEventListener('click', () => {
+      if (!requireGrid()) return;
+      const cv = document.getElementById('blason-canvas');
+      renderToCanvas(cv.getContext('2d'), currentGrid, cv.width, cv.height);
+      cv.toBlob((blob) => downloadBlob(blob, `${slugify(currentText)}.png`), 'image/png');
+    });
+
+    document.getElementById('export-copy').addEventListener('click', async () => {
+      if (!requireGrid()) return;
+      await navigator.clipboard.writeText(serializeText(currentGrid));
+    });
+
+    document.getElementById('export-txt').addEventListener('click', () => {
+      if (!requireGrid()) return;
+      downloadBlob(new Blob([serializeText(currentGrid)], { type: 'text/plain' }), `${slugify(currentText)}.txt`);
+    });
+
+    document.getElementById('export-ans').addEventListener('click', () => {
+      if (!requireGrid()) return;
+      downloadBlob(new Blob([serializeAnsi(currentGrid)], { type: 'text/plain' }), `${slugify(currentText)}.ans`);
+    });
+
+    document.getElementById('export-svg').addEventListener('click', () => {
+      if (!requireGrid()) return;
+      downloadBlob(new Blob([serializeSvg(currentGrid)], { type: 'image/svg+xml' }), `${slugify(currentText)}.svg`);
     });
   </script>
 </body>
