@@ -135,8 +135,7 @@ function blankGrid(core, cols, rows) {
 test('overlayStructural frame=box: coins et bords', () => {
   const core = loadBlasonCore();
   const cells = blankGrid(core, 80, 50);
-  const meta = { seed: 0x7F3A, rev: '2.6', unit: 'UNIT/D-01' };
-  core.overlayStructural(cells, { frame: 'box' }, meta);
+  core.overlayStructural(cells, { frame: 'box' });
   assert.equal(cells[0][0].char, '┌');
   assert.equal(cells[0][79].char, '┐');
   assert.equal(cells[49][0].char, '└');
@@ -144,21 +143,24 @@ test('overlayStructural frame=box: coins et bords', () => {
   assert.equal(cells[0][0].layer, 'struct');
 });
 
-test('overlayStructural: ligne data contient le SEED en hex et layer=data', () => {
+test('overlayStructural: n\u2019écrit plus de ligne data dans la grille', () => {
   const core = loadBlasonCore();
   const cells = blankGrid(core, 80, 50);
-  core.overlayStructural(cells, { frame: 'box' }, { seed: 0x7F3A, rev: '2.6', unit: 'UNIT/D-01' });
-  const dataRow = cells[48].map(c => c.char).join('');
-  assert.ok(dataRow.includes('SEED 0x'));
-  assert.ok(dataRow.includes('00007F3A'));
-  const hasDataLayer = cells[48].some(c => c.layer === 'data');
-  assert.ok(hasDataLayer);
+  core.overlayStructural(cells, { frame: 'box' });
+  const hasDataLayer = cells.some(row => row.some(c => c.layer === 'data'));
+  assert.equal(hasDataLayer, false);
+});
+
+test('formatSeedLine: hex sur 8 caractères + rev + unit', () => {
+  const { formatSeedLine } = loadBlasonCore();
+  const line = formatSeedLine({ seed: 0x7F3A, rev: '2.6', unit: 'UNIT/D-01' });
+  assert.equal(line, 'SEED 0x00007F3A  REV 2.6  UNIT/D-01');
 });
 
 test('overlayStructural frame=ticks: pas de bordure pleine', () => {
   const core = loadBlasonCore();
   const cells = blankGrid(core, 80, 50);
-  core.overlayStructural(cells, { frame: 'ticks' }, { seed: 1, rev: '2.6', unit: 'U' });
+  core.overlayStructural(cells, { frame: 'ticks' });
   assert.equal(cells[0][0].char, '+'); // tick au coin
 });
 

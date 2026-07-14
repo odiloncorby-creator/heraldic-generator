@@ -153,7 +153,7 @@
 
     if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { makeEntropy, gaussianRandom, deriveParams });
 
-    function overlayStructural(cells, params, meta) {
+    function overlayStructural(cells, params) {
       const rows = cells.length, cols = cells[0].length;
       const put = (r, c, ch, layer) => {
         if (r >= 0 && r < rows && c >= 0 && c < cols) {
@@ -174,18 +174,16 @@
       for (let r = 6; r < rows - 6; r += 12) {
         for (let c = 8; c < cols - 8; c += 16) put(r, c, '+');
       }
-      // Ligne de données (avant-dernière ligne)
-      const hex = (meta.seed >>> 0).toString(16).toUpperCase().padStart(8, '0');
-      const label = `SEED 0x${hex}  REV ${meta.rev}  ${meta.unit}`;
-      const start = 2;
-      for (let i = 0; i < label.length && start + i < cols - 2; i++) {
-        put(rows - 2, start + i, label[i], 'data');
-      }
       return cells;
     }
 
+    function formatSeedLine(meta) {
+      const hex = (meta.seed >>> 0).toString(16).toUpperCase().padStart(8, '0');
+      return `SEED 0x${hex}  REV ${meta.rev}  ${meta.unit}`;
+    }
+
     if (typeof module !== 'undefined' && module.exports) {
-      Object.assign(module.exports, { overlayStructural });
+      Object.assign(module.exports, { overlayStructural, formatSeedLine });
     }
 
     function parseColor(color) {
@@ -377,7 +375,7 @@
       const field = rasterizeToDotField(particles, dotW, dotH);
       let cells = dotFieldToBraille(field, cols, rows);
       const meta = { seed, rev: '2.6', unit: 'UNIT/D-01' };
-      cells = overlayStructural(cells, params, meta);
+      cells = overlayStructural(cells, params);
       const grid = colorize(cells, params);
       grid.seed = seed;
       grid.meta = meta;
