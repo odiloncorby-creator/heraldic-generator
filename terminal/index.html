@@ -397,7 +397,7 @@
     // <<< ANCHOR:UI — T8–T11 insèrent leur câblage DOM ici (append uniquement). >>>
 
     function renderToCanvas(ctx, grid, w, h) {
-      const cw = w / grid.cols, ch = h / grid.rows;
+      const cw = w / grid.cols, ch = h / (grid.rows + 1);
       ctx.fillStyle = '#0A0A0A';
       ctx.fillRect(0, 0, w, h);
       ctx.textBaseline = 'middle';
@@ -411,6 +411,10 @@
           ctx.fillText(cell.char, c * cw + cw / 2, r * ch + ch / 2);
         }
       }
+      ctx.fillStyle = '#8A9AD4';
+      ctx.textAlign = 'left';
+      ctx.font = `${Math.floor(ch * 0.5)}px monospace`;
+      ctx.fillText(formatSeedLine(grid.meta), cw * 0.3, grid.rows * ch + ch / 2);
     }
 
     function cellSpan(ch, color) {
