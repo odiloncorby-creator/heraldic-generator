@@ -15,6 +15,8 @@ Générateur procédural de blasons/emblèmes pour l'univers vvd.world × odilon
 
 2. **Mismatch de prototype `node:vm` / `assert/strict`.** Les tableaux construits à l'intérieur d'un `vm.createContext()` ont un `Array.prototype` différent de celui du realm Node hôte. `assert/strict`'s `deepEqual` (qui se comporte comme `deepStrictEqual`) échoue sur ces comparaisons même quand les valeurs sont identiques. Ne jamais corriger ça en manipulant le prototype du retour d'une fonction pure (ex. `Object.setPrototypeOf`) — c'est un hack de test qui fuit dans le code de prod. La bonne correction : utiliser `require('node:assert')` (non strict) pour la comparaison concernée, uniquement dans le test qui en a besoin.
 
+3. **Apostrophe typographique transcrite en apostrophe droite dans une chaîne JS.** Un implémenteur (Task 11 de `terminal/index.html`) a retranscrit `alert('Génère un blason d’abord...')` (apostrophe typographique `’`, U+2019) en `alert('Génère un blason d'abord...')` (apostrophe droite `'`, U+0027) — ce qui ferme la chaîne à quote simple prématurément et casse la syntaxe de tout le bloc `<script>` contenant. Même famille de piège que le n°1 (caractère visuellement quasi-identique mais fonctionnellement différent, invisible à l'œil dans un diff). Détecté seulement parce que la revue finale a fait tourner `node --check` sur le bloc extrait — un agent qui transcrit du texte français avec apostrophes depuis une spec/plan doit préserver l'apostrophe typographique telle quelle dans les chaînes à quotes simples, jamais la "corriger" en apostrophe droite.
+
 ## Tests
 
 ```bash
