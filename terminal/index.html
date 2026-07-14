@@ -48,7 +48,7 @@
 </head>
 <body>
   <canvas id="blason-canvas" width="1080" height="1350" style="display:none"></canvas>
-  <pre id="blason-out" aria-live="polite"></pre>
+  <pre id="blason-out"></pre>
   <div id="blason-prompt">
     <label for="blason-input" class="sr-only">Mot-clé ou phrase à transformer en blason</label>
     <span aria-hidden="true">heraldic@vvd:~$</span>
@@ -430,7 +430,7 @@
 
     function renderDecode(grid, pre) {
       const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (reduce) { renderToDom(grid, pre); return; }
+      if (reduce) { decodeGeneration++; renderToDom(grid, pre); return; }
 
       const myGeneration = ++decodeGeneration;
       const SCRAMBLE = '⠿⣿⢿⡿⣻⠷█▓▒░/\\|+°';
