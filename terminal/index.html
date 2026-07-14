@@ -570,7 +570,7 @@
         const [name, ...rest] = text.slice(1).split(/\s+/);
         const key = name.toLowerCase();
         if (key === 'export') { handleExport(rest[0] ? rest[0].toLowerCase() : undefined); return; }
-        if (COMMANDS[key]) { COMMANDS[key](); return; }
+        if (Object.hasOwn(COMMANDS, key)) { COMMANDS[key](); return; }
         logLine(`commande inconnue: /${name} — tape /help`, { error: true });
         return;
       }
