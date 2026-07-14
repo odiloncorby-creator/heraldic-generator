@@ -36,32 +36,34 @@
     font-size: 16px; min-height: 44px; box-sizing: border-box;
   }
   #blason-input:focus-visible { outline: 2px solid var(--color-b); outline-offset: 2px; }
-  button {
-    background: var(--color-bg); color: var(--color-b); border: 1px solid var(--color-a);
-    padding: 10px 14px; font-family: monospace; font-size: 14px; min-height: 44px;
-    cursor: pointer; text-transform: uppercase;
+  #blason-banner {
+    margin: 0; color: var(--color-a); font-size: 13px; line-height: 1.3;
+    width: 100%; max-width: 520px;
   }
-  button:hover:not(:disabled) { border-color: var(--color-b); }
-  button:disabled { opacity: 0.5; cursor: not-allowed; }
-  button:focus-visible { outline: 2px solid var(--color-b); outline-offset: 2px; }
+  #blason-log {
+    margin: 0; width: 100%; max-width: 520px; font-size: 13px; line-height: 1.4;
+    white-space: pre-wrap; color: var(--color-b);
+  }
+  #blason-log .log-error { color: var(--color-hazard); }
+  #blason-seed {
+    font-size: 12px; color: var(--color-a); letter-spacing: 0.02em;
+  }
 </style>
 </head>
 <body>
   <canvas id="blason-canvas" width="1080" height="1350" style="display:none"></canvas>
-  <pre id="blason-out"></pre>
+  <pre id="blason-banner">┌────────────────────────────────┐
+│  HERALDIC TERMINAL              │
+│  v2.6 — tape /help              │
+└────────────────────────────────┘</pre>
+  <div id="blason-log"></div>
   <div id="blason-prompt">
-    <label for="blason-input" class="sr-only">Mot-clé ou phrase à transformer en blason</label>
-    <span aria-hidden="true">heraldic@vvd:~$</span>
-    <input id="blason-input" type="text" placeholder="tape un mot puis Entrée" autocomplete="off" spellcheck="false">
+    <label for="blason-input" class="sr-only">Mot-clé ou phrase à transformer en blason, ou commande /help</label>
+    <span aria-hidden="true">heraldic:~$</span>
+    <input id="blason-input" type="text" placeholder="tape un mot ou /help" autocomplete="off" spellcheck="false">
   </div>
-  <div id="blason-actions">
-    <button id="blason-reroll" type="button">[ RE-ROLL ]</button>
-    <button id="export-png" type="button">PNG</button>
-    <button id="export-copy" type="button">COPIER TXT</button>
-    <button id="export-txt" type="button">.TXT</button>
-    <button id="export-ans" type="button">.ANS</button>
-    <button id="export-svg" type="button">.SVG</button>
-  </div>
+  <pre id="blason-out"></pre>
+  <div id="blason-seed"></div>
 
   <script id="blason-script">
     const COLS = 80;
