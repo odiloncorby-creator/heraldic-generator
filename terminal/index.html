@@ -222,10 +222,6 @@
       Object.assign(module.exports, { parseColor, serializeText, serializeAnsi });
     }
 
-    // <<< ANCHOR:PURE — T1–T7 insèrent ici (append uniquement, ne jamais réordonner).
-    //     Modèle par tâche : définir la/les fonction(s), puis, juste dessous :
-    //     if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { maFonction }); >>>
-
     function generateParticles(params, rng, width, height) {
       const cx = width / 2, cy = height / 2;
       const maxRadius = Math.min(width, height) * 0.42;
@@ -350,6 +346,7 @@
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
           const cell = cells[r][c];
+          // layer:'data' n'est plus émis par overlayStructural depuis Task 1 — conservé pour compat descendante avec d'éventuels appelants externes de colorize()
           if (cell.layer === 'data') {
             cell.color = '#E61919';
           } else if (cell.layer === 'struct') {
@@ -394,7 +391,6 @@
   </script>
 
   <script id="blason-ui">
-    // <<< ANCHOR:UI — T8–T11 insèrent leur câblage DOM ici (append uniquement). >>>
 
     function renderToCanvas(ctx, grid, w, h) {
       const cw = w / grid.cols, ch = h / (grid.rows + 1);
@@ -531,7 +527,7 @@
 
     function requireGrid() {
       if (!currentGrid) {
-        logLine(`aucun blason généré — tape un mot d’abord`, { error: true });
+        logLine(`aucun blason généré — tape un mot d\u2019abord`, { error: true });
         return false;
       }
       return true;
@@ -544,7 +540,7 @@
           '  <texte>              génère un blason à partir du texte',
           '  /reroll              nouveau tirage du même texte',
           '  /export <fmt>        exporte le dernier blason (fmt: png, txt, copy, ans, svg)',
-          '  /clear                vide l’historique affiché',
+          '  /clear                vide l\u2019historique affiché',
           '  /help                 affiche cette liste',
         ].join('\n'));
       },
