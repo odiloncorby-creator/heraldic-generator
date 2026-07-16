@@ -1,0 +1,19 @@
+{
+  "name": "heraldic",
+  "version": "0.1.0",
+  "description": "Générateur procédural de blasons ASCII/braille en CLI — même texte, même blason, toujours.",
+  "bin": {
+    "heraldic": "./bin/heraldic.js"
+  },
+  "files": [
+    "bin",
+    "lib"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test test/"
+  },
+  "license": "MIT"
+}
