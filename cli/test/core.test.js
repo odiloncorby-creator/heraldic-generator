@@ -137,7 +137,7 @@ function blankGrid(cols, rows) {
   return core.dotFieldToBraille(new Float64Array(cols * 2 * rows * 4), cols, rows);
 }
 
-test('overlayStructural: cadre braille fermé (coins alignés sur l\'intérieur)', () => {
+test('overlayStructural: cadre braille fermé (coins alignés sur l’intérieur)', () => {
   const cells = blankGrid(80, 50);
   core.overlayStructural(cells, {});
   assert.equal(cells[0][0].char, '⡏');
@@ -147,7 +147,7 @@ test('overlayStructural: cadre braille fermé (coins alignés sur l\'intérieur)
   assert.equal(cells[0][0].layer, 'struct');
 });
 
-test('overlayStructural: n\'écrit plus de ligne data dans la grille', () => {
+test('overlayStructural: n’écrit plus de ligne data dans la grille', () => {
   const cells = blankGrid(80, 50);
   core.overlayStructural(cells, {});
   const hasDataLayer = cells.some(row => row.some(c => c.layer === 'data'));
