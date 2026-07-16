@@ -22,16 +22,21 @@ test('computeDecodeFrame : la cellule la plus excentrée reste blanche avant son
 });
 
 test('computeDecodeFrame : la cellule centrale (d=0) atteint son caractère final dès t >= DECODE_DURATION_MS', () => {
-  const grid = makeGrid(3, 3);
+  // cx = cols/2 = 2, cy = rows/2 = 2 (grille paire) : la cellule [2][2] est
+  // exactement au centre géométrique (d=0), donc cellStart=0.
+  const grid = makeGrid(4, 4);
   const rng = mulberry32(1);
   const frame = computeDecodeFrame(grid, DECODE_DURATION_MS, rng);
-  assert.equal(frame.cells[1][1].char, 'X');
+  assert.equal(frame.cells[2][2].char, 'X');
 });
 
 test('computeDecodeFrame : les caractères en cours de révélation viennent de SCRAMBLE_CHARS', () => {
+  // cx = cy = 2.5 : les cellules [2][2]/[2][3]/[3][2]/[3][3] sont les plus
+  // proches du centre, à d=0.2 soit cellStart=100ms. t=150 les place dans
+  // leur fenêtre de scramble ([cellStart, cellStart+DECODE_DURATION_MS)).
   const grid = makeGrid(5, 5);
   const rng = mulberry32(7);
-  const frame = computeDecodeFrame(grid, 1, rng);
+  const frame = computeDecodeFrame(grid, 150, rng);
   let sawScramble = false;
   for (const row of frame.cells) {
     for (const cell of row) {

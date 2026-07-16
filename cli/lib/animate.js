@@ -5,7 +5,7 @@ const DECODE_DURATION_MS = 500;
 const DECODE_STAGGER_MS = 500;
 
 function computeDecodeFrame(grid, t, rng) {
-  const cx = (grid.cols - 1) / 2, cy = (grid.rows - 1) / 2;
+  const cx = grid.cols / 2, cy = grid.rows / 2;
   const maxD = Math.hypot(cx, cy);
   let done = true;
   const cells = [];
