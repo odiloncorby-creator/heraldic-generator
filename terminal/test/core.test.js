@@ -35,7 +35,7 @@ test('deriveParams: même famille pour même familyRng, micro variable', () => {
   const p2 = deriveParams(mulberry32(42), mulberry32(2));
   // macro stable (dépend de familyRng seul)
   assert.deepEqual(p1.symmetry, p2.symmetry);
-  assert.equal(p1.frame, p2.frame);
+  assert.equal(p1.paletteBias, p2.paletteBias);
   // micro variable (dépend de variantRng)
   assert.notDeepEqual(p1.clusters, p2.clusters);
 });
@@ -46,7 +46,6 @@ test('deriveParams: bornes des paramètres', () => {
   assert.ok(['axial', 'radial'].includes(p.symmetry.type));
   assert.ok(p.clusters.length >= 3 && p.clusters.length <= 7);
   assert.ok(p.jitter >= 0.3 && p.jitter <= 0.8);
-  assert.ok(['brackets', 'box', 'ticks'].includes(p.frame));
   for (const c of p.clusters) {
     assert.ok(c.distance >= 0.15 && c.distance <= 0.9);
     assert.ok(c.particleCount > 0);
@@ -114,7 +113,7 @@ test('dotFieldToBraille: champ vide = blank braille U+2800', () => {
 test('dotFieldToBraille: point haut-gauche allume dot1 (0x2801)', () => {
   const { dotFieldToBraille } = loadBlasonCore();
   const field = new Float64Array(160 * 200);
-  field[0] = 1; // sous-point (0,0) de la cellule (0,0)
+  field[0] = 1; // sous-point (0,0)
   const cells = dotFieldToBraille(field, 80, 50);
   assert.equal(cells[0][0].char, '⠁'); // dot1
 });
@@ -128,18 +127,27 @@ test('dotFieldToBraille: cellule pleine = 0x28FF', () => {
   assert.equal(cells[0][0].intensity, 1);
 });
 
+test('dotFieldToBraille: gamma relève un point faible sous le seuil linéaire', () => {
+  const { dotFieldToBraille } = loadBlasonCore();
+  const field = new Float64Array(160 * 200);
+  // 0.02 linéaire < 0.06 (seuil) → éteint sans gamma ; 0.02^0.55 ≈ 0.116 > 0.06 → allumé
+  field[0] = 0.02;
+  const cells = dotFieldToBraille(field, 80, 50);
+  assert.equal(cells[0][0].char, '⠁');
+});
+
 function blankGrid(core, cols, rows) {
   return core.dotFieldToBraille(new Float64Array(cols * 2 * rows * 4), cols, rows);
 }
 
-test('overlayStructural frame=box: coins et bords', () => {
+test('overlayStructural: cadre braille fermé (coins alignés sur l’intérieur)', () => {
   const core = loadBlasonCore();
   const cells = blankGrid(core, 80, 50);
-  core.overlayStructural(cells, { frame: 'box' });
-  assert.equal(cells[0][0].char, '┌');
-  assert.equal(cells[0][79].char, '┐');
-  assert.equal(cells[49][0].char, '└');
-  assert.equal(cells[49][79].char, '┘');
+  core.overlayStructural(cells, {});
+  assert.equal(cells[0][0].char, '⡏');
+  assert.equal(cells[0][79].char, '⢹');
+  assert.equal(cells[49][0].char, '⣇');
+  assert.equal(cells[49][79].char, '⣸');
   assert.equal(cells[0][0].layer, 'struct');
 });
 
@@ -155,13 +163,6 @@ test('formatSeedLine: hex sur 8 caractères + rev + unit', () => {
   const { formatSeedLine } = loadBlasonCore();
   const line = formatSeedLine({ seed: 0x7F3A, rev: '2.6', unit: 'UNIT/D-01' });
   assert.equal(line, 'SEED 0x00007F3A  REV 2.6  UNIT/D-01');
-});
-
-test('overlayStructural frame=ticks: pas de bordure pleine', () => {
-  const core = loadBlasonCore();
-  const cells = blankGrid(core, 80, 50);
-  core.overlayStructural(cells, { frame: 'ticks' });
-  assert.equal(cells[0][0].char, '+'); // tick au coin
 });
 
 const FIXTURE_GRID = { cols: 3, rows: 2, cells: [
