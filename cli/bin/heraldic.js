@@ -22,6 +22,7 @@ function makeEntropy() {
 }
 
 let currentText = '';
+let pendingExport = Promise.resolve();
 let currentGrid = null;
 
 function generate(text, entropy) {
@@ -59,7 +60,7 @@ function handleExport(arg) {
     return;
   }
   if (!requireGrid()) return;
-  runExport(arg).catch((err) => {
+  pendingExport = runExport(arg).catch((err) => {
     console.log(`échec écriture fichier: ${err.message}`);
   });
 }
@@ -84,7 +85,7 @@ const COMMANDS = {
     console.clear();
   },
   quit() {
-    rl.close();
+    pendingExport.then(() => rl.close());
   },
 };
 
@@ -116,5 +117,5 @@ rl.on('line', (line) => {
   rl.prompt();
 });
 rl.on('close', () => {
-  process.exit(0);
+  pendingExport.finally(() => process.exit(0));
 });
