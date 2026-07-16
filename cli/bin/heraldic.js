@@ -24,6 +24,7 @@ function makeEntropy() {
 let currentText = '';
 let pendingExport = Promise.resolve();
 let currentGrid = null;
+let quitting = false;
 
 function generate(text, entropy) {
   currentText = text;
@@ -85,6 +86,7 @@ const COMMANDS = {
     console.clear();
   },
   quit() {
+    quitting = true;
     pendingExport.then(() => rl.close());
   },
 };
@@ -113,6 +115,7 @@ const rl = readline.createInterface({
 
 rl.prompt();
 rl.on('line', (line) => {
+  if (quitting) return;
   handleLine(line);
   rl.prompt();
 });
