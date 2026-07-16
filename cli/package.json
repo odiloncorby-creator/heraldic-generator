@@ -15,5 +15,8 @@
   "scripts": {
     "test": "node --test"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "sharp": "^0.35.3"
+  }
 }
