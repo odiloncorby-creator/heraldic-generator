@@ -26,7 +26,7 @@ commandes disponibles :
   <texte>              génère un blason à partir du texte
   /reroll               nouveau tirage du même texte
   /export <fmt>         exporte le dernier blason (fmt: png, txt, ans, svg)
-  /clear                 vide l'écran
+  /clear                 vide l’écran
   /quit                  quitte le programme
   /help                  affiche cette liste
 ```
