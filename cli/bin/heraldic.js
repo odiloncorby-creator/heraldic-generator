@@ -5,9 +5,10 @@ const fs = require('fs');
 const readline = require('readline');
 const crypto = require('crypto');
 
-const { buildGrid, slugify } = require('../lib/core');
-const { serializeText, serializeAnsi, serializeSvg } = require('../lib/serialize');
+const { buildGrid, slugify, mulberry32, formatSeedLine } = require('../lib/core');
+const { serializeText, serializeAnsi, serializeSvg, cellsToAnsi } = require('../lib/serialize');
 const { serializeSvgToPngBuffer } = require('../lib/png');
+const { computeDecodeFrame, DECODE_STAGGER_MS, DECODE_DURATION_MS } = require('../lib/animate');
 
 const BANNER = `▗▖ ▗▖▗▄▄▄▖▗▄▄▖  ▗▄▖ ▗▖   ▗▄▄▄ ▗▄▄▄▖ ▗▄▄▖
 ▐▌ ▐▌▐▌   ▐▌ ▐▌▐▌ ▐▌▐▌   ▐▌  █  █  ▐▌
@@ -26,10 +27,46 @@ let pendingExport = Promise.resolve();
 let currentGrid = null;
 let quitting = false;
 
-function generate(text, entropy) {
+const FRAME_INTERVAL_MS = 50;
+let generation = 0;
+
+function playDecodeAnimation(grid, myGeneration) {
+  if (!process.stdout.isTTY) {
+    console.log(serializeAnsi(grid));
+    return Promise.resolve();
+  }
+  const rng = mulberry32(grid.seed >>> 0);
+  const start = Date.now();
+  let first = true;
+  process.stdout.write('\x1b[?25l');
+  return new Promise((resolve) => {
+    const timer = setInterval(() => {
+      if (generation !== myGeneration) {
+        clearInterval(timer);
+        process.stdout.write('\x1b[?25h');
+        resolve();
+        return;
+      }
+      const t = Date.now() - start;
+      const frame = computeDecodeFrame(grid, t, rng);
+      if (!first) process.stdout.write(`\x1b[${grid.rows}A\x1b[0J`);
+      process.stdout.write(cellsToAnsi(frame.cells) + '\n');
+      first = false;
+      if (frame.done) {
+        clearInterval(timer);
+        console.log(`\n${formatSeedLine(grid.meta)}`);
+        process.stdout.write('\x1b[?25h');
+        resolve();
+      }
+    }, FRAME_INTERVAL_MS);
+  });
+}
+
+async function generate(text, entropy) {
   currentText = text;
   currentGrid = buildGrid(text, entropy);
-  console.log(serializeAnsi(currentGrid));
+  generation += 1;
+  await playDecodeAnimation(currentGrid, generation);
 }
 
 function requireGrid() {
@@ -78,9 +115,9 @@ const COMMANDS = {
       '  /help                  affiche cette liste',
     ].join('\n'));
   },
-  reroll() {
+  async reroll() {
     if (!requireGrid()) return;
-    generate(currentText, makeEntropy());
+    await generate(currentText, makeEntropy());
   },
   clear() {
     console.clear();
@@ -91,18 +128,18 @@ const COMMANDS = {
   },
 };
 
-function handleLine(raw) {
+async function handleLine(raw) {
   const text = raw.trim();
   if (text.length === 0) return;
   if (text[0] === '/') {
     const [name, ...rest] = text.slice(1).split(/\s+/);
     const key = name.toLowerCase();
     if (key === 'export') { handleExport(rest[0] ? rest[0].toLowerCase() : undefined); return; }
-    if (Object.hasOwn(COMMANDS, key)) { COMMANDS[key](); return; }
+    if (Object.hasOwn(COMMANDS, key)) { await COMMANDS[key](); return; }
     console.log(`commande inconnue: /${name} — tape /help`);
     return;
   }
-  generate(text, makeEntropy());
+  await generate(text, makeEntropy());
 }
 
 console.log(BANNER);
@@ -114,9 +151,9 @@ const rl = readline.createInterface({
 });
 
 rl.prompt();
-rl.on('line', (line) => {
+rl.on('line', async (line) => {
   if (quitting) return;
-  handleLine(line);
+  await handleLine(line);
   rl.prompt();
 });
 rl.on('close', () => {
