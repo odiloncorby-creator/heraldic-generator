@@ -15,9 +15,9 @@ function serializeText(grid) {
   return `${art}\n\n${formatSeedLine(grid.meta)}`;
 }
 
-function serializeAnsi(grid) {
+function cellsToAnsi(cells) {
   const RESET = '\x1b[0m';
-  const art = grid.cells.map(row => {
+  return cells.map(row => {
     let line = '', last = null;
     for (const cell of row) {
       if (cell.color !== last) {
@@ -29,7 +29,10 @@ function serializeAnsi(grid) {
     }
     return line + RESET;
   }).join('\n');
-  return `${art}\n\n${formatSeedLine(grid.meta)}`;
+}
+
+function serializeAnsi(grid) {
+  return `${cellsToAnsi(grid.cells)}\n\n${formatSeedLine(grid.meta)}`;
 }
 
 function escapeXml(s) {
@@ -58,4 +61,4 @@ function serializeSvg(grid, opts) {
   return out;
 }
 
-module.exports = { parseColor, serializeText, serializeAnsi, escapeXml, serializeSvg };
+module.exports = { parseColor, serializeText, serializeAnsi, escapeXml, serializeSvg, cellsToAnsi };

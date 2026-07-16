@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const assertLoose = require('node:assert');
-const { serializeText, serializeAnsi, parseColor, escapeXml, serializeSvg } = require('../lib/serialize');
+const { serializeText, serializeAnsi, parseColor, escapeXml, serializeSvg, cellsToAnsi } = require('../lib/serialize');
 
 const FIXTURE_GRID = { cols: 3, rows: 2, cells: [
   [{ char: 'A', color: '#E61919', layer: 'data' },
@@ -27,6 +27,13 @@ test('serializeAnsi: contient un escape truecolor, un reset, et la ligne seed', 
   assert.ok(out.includes('\x1b[0m'));
   const stripped = out.replace(/\x1b\[[0-9;]*m/g, '');
   assert.equal(stripped, 'ABC\n⠁⠀D\n\nSEED 0x0000002A  REV 2.6  U');
+});
+
+test('cellsToAnsi: rend les cellules d’une grille en art ANSI truecolor, sans le footer seed', () => {
+  const out = cellsToAnsi(FIXTURE_GRID.cells);
+  assert.ok(out.includes('\x1b[38;2;230;25;25m'));
+  const stripped = out.replace(/\x1b\[[0-9;]*m/g, '');
+  assert.equal(stripped, 'ABC\n⠁⠀D');
 });
 
 test('escapeXml: échappe &, <, >', () => {
