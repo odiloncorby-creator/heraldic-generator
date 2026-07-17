@@ -1,4 +1,4 @@
-# Blason générateur odilon.wav
+# Blazon Generator — odilon.wav
 
 A word in, a coat of arms out. This one — the root `index.html` — is the
 purest form: no randomness at all, just the text. Same input, same output,
