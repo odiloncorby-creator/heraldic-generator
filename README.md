@@ -1,34 +1,51 @@
 # Blason générateur odilon.wav
 
-Générateur procédural de blasons/emblèmes. Texte en entrée (mot ou phrase, longueur libre) → emblème unique et déterministe : même texte → même image, toujours.
+A word in, a coat of arms out. This one — the root `index.html` — is the
+purest form: no randomness at all, just the text. Same input, same output,
+byte for byte, every time. The two other surfaces below trade that purity
+for variety.
 
-Charte odilon.wav : fond noir, pointillisme, palette bleu-gris désaturé (`#6B7EC4` / `#8A9AD4`), formes organiques érodées, aucun contour net, aucun cadre.
+odilon.wav palette: black background, stippled particles, desaturated
+blue-gray (`#6B7EC4` / `#8A9AD4`), eroded organic shapes, no hard edges, no
+frame.
 
-## Trois surfaces, un même pipeline
+## Three surfaces, one pipeline
 
-- **CLI Node.js**, publié sur npm sous le nom [`heraldic`](https://www.npmjs.com/package/heraldic) — même pipeline dans un vrai terminal, texte fixe la famille, chaque tirage varie :
+- **Node CLI**, published on npm as [`heraldic`](https://www.npmjs.com/package/heraldic) — same pipeline in a real terminal. Text fixes the family, every draw varies the rest:
   ```bash
   npm install -g heraldic
   ```
-  Voir [`cli/README.md`](cli/README.md).
-- **`terminal/index.html`** — variante terminal-only dans le navigateur, avec entropie aléatoire à chaque tirage (le texte fixe la famille, `/reroll` change la variante). Voir [`terminal/README.md`](terminal/README.md).
-- **`index.html`** (racine, ce fichier) — version web canonique, un seul tirage déterministe par texte (aucune entropie mêlée : même texte → même image, toujours).
+  See [`cli/README.md`](cli/README.md).
+- **[`terminal/index.html`](terminal/index.html)** — terminal-only browser variant with fresh randomness on every draw (text fixes the family, `/reroll` draws a new variant). See [`terminal/README.md`](terminal/README.md).
+- **[`index.html`](index.html)** (root, this one) — the canonical web version: a single deterministic draw per text, no randomness mixed in — same text → same image, always.
 
 ## Usage
 
-Ouvrir `index.html` directement dans un navigateur — aucun build, aucune dépendance, aucun serveur.
+Open `index.html` directly in a browser — no build, no dependencies, no
+server.
 
-1. Taper un mot ou une phrase dans le champ texte.
-2. Le canvas se met à jour en direct (debounce 150ms).
-3. "Exporter PNG" télécharge l'image en 1080×1350 (ratio 4:5), nommée d'après le texte saisi (slugifié).
+1. Type a word or phrase into the text field.
+2. The canvas updates live (150ms debounce).
+3. "Exporter PNG" downloads the image at 1080×1350 (4:5 ratio), named after
+   the input text (slugified).
 
-## Comment ça marche
+## How it works
 
-1. **Hash → seed** : le texte est hashé (djb2-like) en entier 32 bits.
-2. **PRNG seedé** (`mulberry32`) : toute la génération consomme ce seul flux aléatoire, dans un ordre fixe. Jamais `Math.random()`.
-3. **Paramètres dérivés** : type de symétrie (axiale ou radiale k∈{3,4,6,8}), nombre de clusters, position/rayon/densité de chacun, jitter.
-4. **Champ de particules** : les clusters du secteur de base sont dupliqués/reflétés selon la symétrie, puis chacun disperse ses particules (bruit gaussien, densité décroissante depuis le centre). Pas de silhouette ni contour fixe — la forme émerge du nuage.
-5. **Rendu** : fond noir, chaque particule interpolée entre les deux couleurs de la palette.
+1. **Hash → seed**: the text is hashed (djb2-like) into a 32-bit integer.
+2. **Seeded PRNG** (`mulberry32`): the entire generation draws from this
+   single stream, in a fixed order. Never `Math.random()`.
+3. **Derived parameters**: symmetry type (axial, or radial k∈{3,4,6,8}),
+   cluster count, each cluster's position/radius/density, jitter.
+4. **Particle field**: the base sector's clusters are duplicated/mirrored
+   per the symmetry, then each one scatters its particles (Gaussian noise,
+   density falling off from center). No fixed silhouette or outline — the
+   shape emerges from the cloud.
+5. **Render**: black background, each particle interpolated between the two
+   palette colors.
+
+This is the only surface with zero randomness beyond the text hash — the
+CLI and terminal variants both mix in fresh entropy per draw (see their
+own READMEs for why).
 
 ## Tests
 
@@ -36,20 +53,27 @@ Ouvrir `index.html` directement dans un navigateur — aucun build, aucune dépe
 node --test test/core.test.js
 ```
 
-18 tests, zéro dépendance npm. La logique pure (`index.html#blason-script`) est extraite via `node:vm` par `test/support/extract-core.js` — pas de build, pas de bundler.
+18 tests, zero npm dependencies. The pure logic (`index.html#blason-script`)
+is extracted via `node:vm` by `test/support/extract-core.js` — no build, no
+bundler.
 
 ## Structure
 
-- `cli/` — CLI Node.js publié sur npm sous `heraldic` (voir `cli/README.md`).
-- `terminal/` — variante web terminal-only (voir `terminal/README.md`).
-- `index.html` — fichier unique autonome. Deux `<script>` :
-  - `#blason-script` : logique pure (hash, PRNG, génération, rendu, slugify). Testable en Node, zéro accès DOM.
-  - `#blason-ui` : câblage DOM (input, canvas, bouton export). Non testé (nécessite un navigateur).
-- `test/core.test.js` — suite de tests Node natif (`node:test`).
-- `test/support/extract-core.js` — harnais qui extrait `#blason-script` d'`index.html` via `node:vm` pour le tester.
-- `docs/superpowers/specs/2026-07-11-blason-generateur-design.md` — spec de design validée.
-- `docs/superpowers/plans/2026-07-11-blason-generateur.md` — plan d'implémentation (8 tâches TDD).
+- `cli/` — Node CLI published on npm as `heraldic` (see `cli/README.md`).
+- `terminal/` — terminal-only web variant (see `terminal/README.md`).
+- `index.html` — single self-contained file. Two `<script>` blocks:
+  - `#blason-script`: pure logic (hash, PRNG, generation, rendering,
+    slugify). Testable in Node, zero DOM access.
+  - `#blason-ui`: DOM wiring (input, canvas, export button). Untested
+    (requires a browser).
+- `test/core.test.js` — native Node test suite (`node:test`).
+- `test/support/extract-core.js` — harness that extracts `#blason-script`
+  from `index.html` via `node:vm` to test it.
+- `docs/superpowers/specs/2026-07-11-blason-generateur-design.md` —
+  validated design spec.
+- `docs/superpowers/plans/2026-07-11-blason-generateur.md` — implementation
+  plan (8 TDD tasks).
 
-## Hors scope (session actuelle)
+## Out of scope (current session)
 
-PWA, app en ligne, déploiement, galerie, sauvegarde.
+PWA, hosted app, deployment, gallery, save/persist.
