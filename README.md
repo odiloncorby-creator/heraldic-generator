@@ -1,9 +1,8 @@
 # Blazon Generator — odilon.wav
 
-A word in, a coat of arms out. This one — the root `index.html` — is the
-purest form: no randomness at all, just the text. Same input, same output,
-byte for byte, every time. The two other surfaces below trade that purity
-for variety.
+A word in, a coat of arms out — procedurally generated, seeded from the
+text itself. Three surfaces, each with its own take on how much of that
+generation is fixed by the text alone (details below).
 
 odilon.wav palette: black background, stippled particles, desaturated
 blue-gray (`#6B7EC4` / `#8A9AD4`), eroded organic shapes, no hard edges, no
