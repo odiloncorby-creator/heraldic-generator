@@ -8,7 +8,7 @@ const crypto = require('crypto');
 const { buildGrid, slugify, mulberry32, formatSeedLine } = require('../lib/core');
 const { serializeText, serializeAnsi, serializeSvg, cellsToAnsi } = require('../lib/serialize');
 const { serializeSvgToPngBuffer } = require('../lib/png');
-const { computeDecodeFrame, DECODE_STAGGER_MS, DECODE_DURATION_MS } = require('../lib/animate');
+const { computeDecodeFrame } = require('../lib/animate');
 
 const BANNER = `▗▖ ▗▖▗▄▄▄▖▗▄▄▖  ▗▄▖ ▗▖   ▗▄▄▄ ▗▄▄▄▖ ▗▄▄▖
 ▐▌ ▐▌▐▌   ▐▌ ▐▌▐▌ ▐▌▐▌   ▐▌  █  █  ▐▌
@@ -44,7 +44,6 @@ function playDecodeAnimation(grid, myGeneration) {
     const timer = setInterval(() => {
       if (generation !== myGeneration) {
         clearInterval(timer);
-        process.stdout.write('\x1b[?25h');
         resolve();
         return;
       }
