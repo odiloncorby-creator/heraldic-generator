@@ -1,4 +1,4 @@
-# Blason générateur — vvd.world × odilon.wav
+# Blason générateur odilon.wav
 
 Générateur procédural de blasons/emblèmes. Texte en entrée (mot ou phrase, longueur libre) → emblème unique et déterministe : même texte → même image, toujours.
 
