@@ -4,6 +4,16 @@ Générateur procédural de blasons/emblèmes. Texte en entrée (mot ou phrase, 
 
 Charte odilon.wav : fond noir, pointillisme, palette bleu-gris désaturé (`#6B7EC4` / `#8A9AD4`), formes organiques érodées, aucun contour net, aucun cadre.
 
+## Trois surfaces, un même pipeline
+
+- **CLI Node.js**, publié sur npm sous le nom [`heraldic`](https://www.npmjs.com/package/heraldic) — même pipeline dans un vrai terminal, texte fixe la famille, chaque tirage varie :
+  ```bash
+  npm install -g heraldic
+  ```
+  Voir [`cli/README.md`](cli/README.md).
+- **`terminal/index.html`** — variante terminal-only dans le navigateur, avec entropie aléatoire à chaque tirage (le texte fixe la famille, `/reroll` change la variante). Voir [`terminal/README.md`](terminal/README.md).
+- **`index.html`** (racine, ce fichier) — version web canonique, un seul tirage déterministe par texte (aucune entropie mêlée : même texte → même image, toujours).
+
 ## Usage
 
 Ouvrir `index.html` directement dans un navigateur — aucun build, aucune dépendance, aucun serveur.
@@ -30,6 +40,8 @@ node --test test/core.test.js
 
 ## Structure
 
+- `cli/` — CLI Node.js publié sur npm sous `heraldic` (voir `cli/README.md`).
+- `terminal/` — variante web terminal-only (voir `terminal/README.md`).
 - `index.html` — fichier unique autonome. Deux `<script>` :
   - `#blason-script` : logique pure (hash, PRNG, génération, rendu, slugify). Testable en Node, zéro accès DOM.
   - `#blason-ui` : câblage DOM (input, canvas, bouton export). Non testé (nécessite un navigateur).
