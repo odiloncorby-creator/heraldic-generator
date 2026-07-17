@@ -1,4 +1,4 @@
-# Blazon Generator — odilon.wav
+# Blazon Generator 
 
 A word in, a coat of arms out — procedurally generated, seeded from the
 text itself. Three surfaces, each with its own take on how much of that
