@@ -29,6 +29,7 @@ let quitting = false;
 
 const FRAME_INTERVAL_MS = 50;
 let generation = 0;
+let pendingGenerate = Promise.resolve();
 
 function playDecodeAnimation(grid, myGeneration) {
   if (!process.stdout.isTTY) {
@@ -66,7 +67,8 @@ async function generate(text, entropy) {
   currentText = text;
   currentGrid = buildGrid(text, entropy);
   generation += 1;
-  await playDecodeAnimation(currentGrid, generation);
+  pendingGenerate = playDecodeAnimation(currentGrid, generation);
+  await pendingGenerate;
 }
 
 function requireGrid() {
@@ -157,5 +159,5 @@ rl.on('line', async (line) => {
   rl.prompt();
 });
 rl.on('close', () => {
-  pendingExport.finally(() => process.exit(0));
+  Promise.all([pendingExport, pendingGenerate]).finally(() => process.exit(0));
 });
