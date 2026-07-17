@@ -73,6 +73,3 @@ bundler.
 - `docs/superpowers/plans/2026-07-11-blason-generateur.md` — implementation
   plan (8 TDD tasks).
 
-## Out of scope (current session)
-
-PWA, hosted app, deployment, gallery, save/persist.
