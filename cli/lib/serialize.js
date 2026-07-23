@@ -42,7 +42,9 @@ function escapeXml(s) {
 function serializeSvg(grid, opts) {
   opts = opts || {};
   const cw = opts.cellW || 13.5, ch = opts.cellH || 27, fs = opts.fontSize || 24;
-  const contentW = grid.cols * cw, contentH = (grid.rows + 1) * ch;
+  const seedLine = opts.seedLine !== false;
+  const rowsForContent = seedLine ? grid.rows + 1 : grid.rows;
+  const contentW = grid.cols * cw, contentH = rowsForContent * ch;
   const canvasW = opts.canvasW || contentW, canvasH = opts.canvasH || contentH;
   const offsetX = ((canvasW - contentW) / 2).toFixed(1), offsetY = ((canvasH - contentH) / 2).toFixed(1);
   let out = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasW}" height="${canvasH}" viewBox="0 0 ${canvasW} ${canvasH}">`;
@@ -58,8 +60,10 @@ function serializeSvg(grid, opts) {
       out += `<text x="${x}" y="${y}" fill="${cell.color}">${escapeXml(cell.char)}</text>`;
     }
   }
-  const seedY = ((grid.rows + 0.8) * ch).toFixed(1);
-  out += `<text x="0" y="${seedY}" fill="#8A9AD4">${escapeXml(formatSeedLine(grid.meta))}</text>`;
+  if (seedLine) {
+    const seedY = ((grid.rows + 0.8) * ch).toFixed(1);
+    out += `<text x="0" y="${seedY}" fill="#8A9AD4">${escapeXml(formatSeedLine(grid.meta))}</text>`;
+  }
   out += `</g></g></svg>`;
   return out;
 }

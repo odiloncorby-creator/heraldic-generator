@@ -72,3 +72,27 @@ test('serializeSvg: canvasH applique un letterbox (1080x1920) sans étirer le re
   const offsetY = Number(svg.match(/translate\([\d.]+, ([\d.]+)\)/)[1]);
   assert.ok(Math.abs(offsetY - (1920 - 1377) / 2) < 0.1);
 });
+
+test('serializeSvg: seedLine:false retire la ligne SEED et la ligne réservée', () => {
+  const grid = {
+    cols: 80, rows: 50,
+    cells: Array.from({ length: 50 }, () => Array.from({ length: 80 }, () => ({ char: ' ', color: '#8A9AD4' }))),
+    meta: { seed: 1, rev: '2.6', unit: 'U' },
+  };
+  const svg = serializeSvg(grid, { seedLine: false });
+  const height = Number(svg.match(/height="([\d.]+)"/)[1]);
+  assert.equal(height, 50 * 27);
+  assert.ok(!svg.includes('SEED 0x'));
+});
+
+test('serializeSvg: seedLine par défaut (absent) garde le comportement actuel', () => {
+  const grid = {
+    cols: 80, rows: 50,
+    cells: Array.from({ length: 50 }, () => Array.from({ length: 80 }, () => ({ char: ' ', color: '#8A9AD4' }))),
+    meta: { seed: 1, rev: '2.6', unit: 'U' },
+  };
+  const svg = serializeSvg(grid);
+  const height = Number(svg.match(/height="([\d.]+)"/)[1]);
+  assert.equal(height, 51 * 27);
+  assert.ok(svg.includes('SEED 0x'));
+});
