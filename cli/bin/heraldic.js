@@ -16,7 +16,12 @@ const BANNER = `▗▖ ▗▖▗▄▄▄▖▗▄▄▖  ▗▄▖ ▗▖   ▗
 ▐▌ ▐▌▐▙▄▄▖▐▌ ▐▌▐▌ ▐▌▐▙▄▄▖▐▙▄▄▀▗▄█▄▖▝▚▄▄▖
 CLI v0.1.0 — tape /help`;
 
-const EXPORT_FORMATS = ['png', 'txt', 'ans', 'svg'];
+const EXPORT_FORMATS = ['png', 'png-story', 'txt', 'ans', 'svg'];
+const STORY_HEIGHT = 1920;
+
+function svgOptsFor(grid, story) {
+  return story ? { cellW: 13.5, cellH: STORY_HEIGHT / (grid.rows + 1) } : undefined;
+}
 
 function makeEntropy() {
   return crypto.randomBytes(4).readUInt32BE(0) >>> 0;
@@ -79,15 +84,17 @@ function requireGrid() {
 }
 
 async function runExport(fmt) {
-  const filename = `${slugify(currentText)}.${fmt}`;
+  const story = fmt.endsWith('-story');
+  const suffix = story ? '-story' : '';
+  const filename = `${slugify(currentText)}${suffix}.${fmt.replace('-story', '')}`;
   if (fmt === 'txt') {
     fs.writeFileSync(filename, serializeText(currentGrid));
   } else if (fmt === 'ans') {
     fs.writeFileSync(filename, serializeAnsi(currentGrid));
   } else if (fmt === 'svg') {
     fs.writeFileSync(filename, serializeSvg(currentGrid));
-  } else if (fmt === 'png') {
-    const buffer = await serializeSvgToPngBuffer(serializeSvg(currentGrid));
+  } else if (fmt === 'png' || fmt === 'png-story') {
+    const buffer = await serializeSvgToPngBuffer(serializeSvg(currentGrid, svgOptsFor(currentGrid, story)));
     fs.writeFileSync(filename, buffer);
   }
   console.log(`écrit: ${filename}`);
@@ -110,7 +117,7 @@ const COMMANDS = {
       'commandes disponibles :',
       '  <texte>              génère un blason à partir du texte',
       '  /reroll               nouveau tirage du même texte',
-      '  /export <fmt>         exporte le dernier blason (fmt: png, txt, ans, svg)',
+      '  /export <fmt>         exporte le dernier blason (fmt: png, png-story, txt, ans, svg)',
       '  /clear                 vide l’écran',
       '  /quit                  quitte le programme',
       '  /help                  affiche cette liste',
