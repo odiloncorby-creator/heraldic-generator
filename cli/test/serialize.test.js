@@ -58,16 +58,17 @@ test('serializeSvg: dessine les glyphes non-blancs, saute le blank braille, ajou
   assert.equal(textCount, 6);
 });
 
-test('serializeSvg: cellH calculé pour ratio story (1080x1920) sur une grille 80x50', () => {
+test('serializeSvg: canvasH applique un letterbox (1080x1920) sans étirer le rendu 1080x1377 sur une grille 80x50', () => {
   const grid = {
     cols: 80, rows: 50,
     cells: Array.from({ length: 50 }, () => Array.from({ length: 80 }, () => ({ char: ' ', color: '#8A9AD4' }))),
     meta: { seed: 1, rev: '2.6', unit: 'U' },
   };
-  const cellW = 13.5, cellH = 1920 / (grid.rows + 1);
-  const svg = serializeSvg(grid, { cellW, cellH });
+  const svg = serializeSvg(grid, { canvasH: 1920 });
   const width = Number(svg.match(/width="([\d.]+)"/)[1]);
   const height = Number(svg.match(/height="([\d.]+)"/)[1]);
   assert.equal(width, 1080);
-  assert.ok(Math.abs(height - 1920) < 0.01);
+  assert.equal(height, 1920);
+  const offsetY = Number(svg.match(/translate\([\d.]+, ([\d.]+)\)/)[1]);
+  assert.ok(Math.abs(offsetY - (1920 - 1377) / 2) < 0.1);
 });

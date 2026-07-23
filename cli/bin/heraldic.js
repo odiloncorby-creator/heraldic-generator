@@ -17,20 +17,20 @@ const BANNER = `▗▖ ▗▖▗▄▄▄▖▗▄▄▖  ▗▄▖ ▗▖   ▗
 ▐▌ ▐▌▐▌   ▐▌ ▐▌▐▌ ▐▌▐▌   ▐▌  █  █  ▐▌
 ▐▛▀▜▌▐▛▀▀▘▐▛▀▚▖▐▛▀▜▌▐▌   ▐▌  █  █  ▐▌
 ▐▌ ▐▌▐▙▄▄▖▐▌ ▐▌▐▌ ▐▌▐▙▄▄▖▐▙▄▄▀▗▄█▄▖▝▚▄▄▖
-CLI v0.1.0 — tape /help`;
+CLI v0.2.1 — tape /help`;
 
 const EXPORT_FORMATS = ['png', 'png-story', 'mp4', 'mp4-story', 'txt', 'ans', 'svg'];
 const STORY_HEIGHT = 1920;
 
 function svgOptsFor(grid, story) {
-  return story ? { cellW: 13.5, cellH: STORY_HEIGHT / (grid.rows + 1) } : undefined;
+  return story ? { canvasH: STORY_HEIGHT } : undefined;
 }
 
 const VIDEO_FPS = 30;
 const VIDEO_HOLD_MS = 1200;
 
-async function renderFramePng(grid, cells, cellW, cellH) {
-  const svg = serializeSvg({ cols: grid.cols, rows: grid.rows, cells, meta: grid.meta }, { cellW, cellH });
+async function renderFramePng(grid, cells, cellW, cellH, canvasH) {
+  const svg = serializeSvg({ cols: grid.cols, rows: grid.rows, cells, meta: grid.meta }, { cellW, cellH, canvasH });
   return serializeSvgToPngBuffer(svg);
 }
 
@@ -53,7 +53,7 @@ function runFfmpeg(args) {
   });
 }
 
-async function encodeVideo(grid, cellW, cellH, outPath) {
+async function encodeVideo(grid, cellW, cellH, outPath, canvasH) {
   const totalDurationMs = DECODE_STAGGER_MS + DECODE_DURATION_MS + VIDEO_HOLD_MS;
   const totalFrames = Math.ceil(totalDurationMs / (1000 / VIDEO_FPS));
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'heraldic-'));
@@ -62,7 +62,7 @@ async function encodeVideo(grid, cellW, cellH, outPath) {
     for (let i = 0; i < totalFrames; i++) {
       const t = i * (1000 / VIDEO_FPS);
       const frame = computeDecodeFrame(grid, t, rng);
-      const png = await renderFramePng(grid, frame.cells, cellW, cellH);
+      const png = await renderFramePng(grid, frame.cells, cellW, cellH, canvasH);
       fs.writeFileSync(path.join(tmpDir, `frame-${String(i).padStart(4, '0')}.png`), png);
     }
     // H.264/yuv420p requires even width/height; input 1377px → 1376px.
@@ -149,8 +149,8 @@ async function runExport(fmt) {
     const buffer = await serializeSvgToPngBuffer(serializeSvg(currentGrid, svgOptsFor(currentGrid, story)));
     fs.writeFileSync(filename, buffer);
   } else if (fmt === 'mp4' || fmt === 'mp4-story') {
-    const cellW = 13.5, cellH = story ? STORY_HEIGHT / (currentGrid.rows + 1) : 27;
-    await encodeVideo(currentGrid, cellW, cellH, filename);
+    const canvasH = story ? STORY_HEIGHT : undefined;
+    await encodeVideo(currentGrid, 13.5, 27, filename, canvasH);
   }
   console.log(`écrit: ${filename}`);
 }

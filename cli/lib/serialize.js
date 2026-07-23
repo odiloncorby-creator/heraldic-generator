@@ -42,9 +42,12 @@ function escapeXml(s) {
 function serializeSvg(grid, opts) {
   opts = opts || {};
   const cw = opts.cellW || 13.5, ch = opts.cellH || 27, fs = opts.fontSize || 24;
-  const w = grid.cols * cw, h = (grid.rows + 1) * ch;
-  let out = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`;
-  out += `<rect width="${w}" height="${h}" fill="#0A0A0A"/>`;
+  const contentW = grid.cols * cw, contentH = (grid.rows + 1) * ch;
+  const canvasW = opts.canvasW || contentW, canvasH = opts.canvasH || contentH;
+  const offsetX = ((canvasW - contentW) / 2).toFixed(1), offsetY = ((canvasH - contentH) / 2).toFixed(1);
+  let out = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasW}" height="${canvasH}" viewBox="0 0 ${canvasW} ${canvasH}">`;
+  out += `<rect width="${canvasW}" height="${canvasH}" fill="#0A0A0A"/>`;
+  out += `<g transform="translate(${offsetX}, ${offsetY})">`;
   out += `<g font-family="monospace" font-size="${fs}" xml:space="preserve">`;
   for (let r = 0; r < grid.rows; r++) {
     const y = ((r + 0.8) * ch).toFixed(1);
@@ -57,7 +60,7 @@ function serializeSvg(grid, opts) {
   }
   const seedY = ((grid.rows + 0.8) * ch).toFixed(1);
   out += `<text x="0" y="${seedY}" fill="#8A9AD4">${escapeXml(formatSeedLine(grid.meta))}</text>`;
-  out += `</g></svg>`;
+  out += `</g></g></svg>`;
   return out;
 }
 
