@@ -66,6 +66,9 @@ async function encodeVideo(grid, cellW, cellH, outPath) {
       fs.writeFileSync(path.join(tmpDir, `frame-${String(i).padStart(4, '0')}.png`), png);
     }
     await runFfmpeg(['-y', '-framerate', String(VIDEO_FPS), '-i', path.join(tmpDir, 'frame-%04d.png'), '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2', '-pix_fmt', 'yuv420p', outPath]);
+  } catch (err) {
+    fs.rmSync(outPath, { force: true });
+    throw err;
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
