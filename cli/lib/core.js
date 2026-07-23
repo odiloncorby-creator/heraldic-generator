@@ -202,7 +202,7 @@ function buildGrid(text, entropy, opts) {
   const field = rasterizeToDotField(particles, dotW, dotH);
   let cells = dotFieldToBraille(field, cols, rows);
   const meta = { seed, rev: '2.6', unit: 'UNIT/D-01' };
-  cells = overlayStructural(cells, params);
+  if (!opts.clean) cells = overlayStructural(cells, params);
   const grid = colorize(cells, params);
   grid.seed = seed;
   grid.meta = meta;

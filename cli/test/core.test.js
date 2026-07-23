@@ -204,3 +204,16 @@ test('buildGrid: même mot = même seed de famille (symétrie stable)', () => {
   const frameChar = g => g.cells[0][0].char;
   assert.equal(frameChar(g1), frameChar(g2));
 });
+
+test('buildGrid: opts.clean saute overlayStructural — aucune cellule layer "struct"', () => {
+  const { buildGrid } = core;
+  const grid = buildGrid('sthol', 42, { clean: true });
+  const hasStructLayer = grid.cells.some(row => row.some(c => c.layer === 'struct'));
+  assert.equal(hasStructLayer, false);
+});
+
+test('buildGrid: sans opts.clean, le cadre reste présent (non-régression)', () => {
+  const { buildGrid } = core;
+  const grid = buildGrid('sthol', 42);
+  assert.equal(grid.cells[0][0].layer, 'struct');
+});
