@@ -53,13 +53,28 @@ heraldic:~$ /help
 commandes disponibles :
   <texte>              génère un blason à partir du texte
   /reroll               nouveau tirage du même texte
-  /export <fmt>         exporte le dernier blason (fmt: png, png-story, txt, ans, svg)
+  /export <fmt>         exporte le dernier blason (fmt: png, png-story, mp4, mp4-story, txt, ans, svg)
   /clear                 vide l’écran
   /quit                  quitte le programme
   /help                  affiche cette liste
 ```
 
 (the CLI's own output stays in French — that's what you'll actually see)
+
+## Video export
+
+The `mp4` and `mp4-story` formats render the decode animation to MP4 video.
+This requires the `ffmpeg` system binary — install with `brew install ffmpeg`
+(macOS) or `apt install ffmpeg` (Linux/Debian).
+
+Supported export formats:
+- `png`: single frame PNG (1080×1377)
+- `png-story`: tall story-format PNG (1080×1920)
+- `mp4`: video with decode animation (1080×1376, 30fps, ~2.2s)
+- `mp4-story`: tall video with decode animation (1080×1920, 30fps, ~2.2s)
+- `txt`: plain text
+- `ans`: ANSI colored text
+- `svg`: scalable vector
 
 ## Local development
 

@@ -2,13 +2,16 @@
 'use strict';
 
 const fs = require('fs');
+const path = require('path');
+const os = require('os');
 const readline = require('readline');
 const crypto = require('crypto');
+const { spawn } = require('child_process');
 
 const { buildGrid, slugify, mulberry32, formatSeedLine } = require('../lib/core');
 const { serializeText, serializeAnsi, serializeSvg, cellsToAnsi } = require('../lib/serialize');
 const { serializeSvgToPngBuffer } = require('../lib/png');
-const { computeDecodeFrame } = require('../lib/animate');
+const { computeDecodeFrame, DECODE_DURATION_MS, DECODE_STAGGER_MS } = require('../lib/animate');
 
 const BANNER = `▗▖ ▗▖▗▄▄▄▖▗▄▄▖  ▗▄▖ ▗▖   ▗▄▄▄ ▗▄▄▄▖ ▗▄▄▖
 ▐▌ ▐▌▐▌   ▐▌ ▐▌▐▌ ▐▌▐▌   ▐▌  █  █  ▐▌
@@ -16,11 +19,56 @@ const BANNER = `▗▖ ▗▖▗▄▄▄▖▗▄▄▖  ▗▄▖ ▗▖   ▗
 ▐▌ ▐▌▐▙▄▄▖▐▌ ▐▌▐▌ ▐▌▐▙▄▄▖▐▙▄▄▀▗▄█▄▖▝▚▄▄▖
 CLI v0.1.0 — tape /help`;
 
-const EXPORT_FORMATS = ['png', 'png-story', 'txt', 'ans', 'svg'];
+const EXPORT_FORMATS = ['png', 'png-story', 'mp4', 'mp4-story', 'txt', 'ans', 'svg'];
 const STORY_HEIGHT = 1920;
 
 function svgOptsFor(grid, story) {
   return story ? { cellW: 13.5, cellH: STORY_HEIGHT / (grid.rows + 1) } : undefined;
+}
+
+const VIDEO_FPS = 30;
+const VIDEO_HOLD_MS = 1200;
+
+async function renderFramePng(grid, cells, cellW, cellH) {
+  const svg = serializeSvg({ cols: grid.cols, rows: grid.rows, cells, meta: grid.meta }, { cellW, cellH });
+  return serializeSvgToPngBuffer(svg);
+}
+
+function runFfmpeg(args) {
+  return new Promise((resolve, reject) => {
+    const proc = spawn('ffmpeg', args);
+    let stderr = '';
+    proc.stderr.on('data', (d) => { stderr += d; });
+    proc.on('error', (err) => {
+      if (err.code === 'ENOENT') {
+        reject(new Error('ffmpeg introuvable — installe-le (brew install ffmpeg / apt install ffmpeg) pour exporter en vidéo'));
+      } else {
+        reject(err);
+      }
+    });
+    proc.on('close', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`ffmpeg a échoué (code ${code}): ${stderr.slice(-500)}`));
+    });
+  });
+}
+
+async function encodeVideo(grid, cellW, cellH, outPath) {
+  const totalDurationMs = DECODE_STAGGER_MS + DECODE_DURATION_MS + VIDEO_HOLD_MS;
+  const totalFrames = Math.ceil(totalDurationMs / (1000 / VIDEO_FPS));
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'heraldic-'));
+  const rng = mulberry32(grid.seed >>> 0);
+  try {
+    for (let i = 0; i < totalFrames; i++) {
+      const t = i * (1000 / VIDEO_FPS);
+      const frame = computeDecodeFrame(grid, t, rng);
+      const png = await renderFramePng(grid, frame.cells, cellW, cellH);
+      fs.writeFileSync(path.join(tmpDir, `frame-${String(i).padStart(4, '0')}.png`), png);
+    }
+    await runFfmpeg(['-y', '-framerate', String(VIDEO_FPS), '-i', path.join(tmpDir, 'frame-%04d.png'), '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2', '-pix_fmt', 'yuv420p', outPath]);
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
 }
 
 function makeEntropy() {
@@ -96,6 +144,9 @@ async function runExport(fmt) {
   } else if (fmt === 'png' || fmt === 'png-story') {
     const buffer = await serializeSvgToPngBuffer(serializeSvg(currentGrid, svgOptsFor(currentGrid, story)));
     fs.writeFileSync(filename, buffer);
+  } else if (fmt === 'mp4' || fmt === 'mp4-story') {
+    const cellW = 13.5, cellH = story ? STORY_HEIGHT / (currentGrid.rows + 1) : 27;
+    await encodeVideo(currentGrid, cellW, cellH, filename);
   }
   console.log(`écrit: ${filename}`);
 }
@@ -117,7 +168,7 @@ const COMMANDS = {
       'commandes disponibles :',
       '  <texte>              génère un blason à partir du texte',
       '  /reroll               nouveau tirage du même texte',
-      '  /export <fmt>         exporte le dernier blason (fmt: png, png-story, txt, ans, svg)',
+      '  /export <fmt>         exporte le dernier blason (fmt: png, png-story, mp4, mp4-story, txt, ans, svg)',
       '  /clear                 vide l’écran',
       '  /quit                  quitte le programme',
       '  /help                  affiche cette liste',
