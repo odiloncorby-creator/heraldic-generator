@@ -70,7 +70,7 @@ This requires the `ffmpeg` system binary — install with `brew install ffmpeg`
 Supported export formats:
 - `png`: single frame PNG (1080×1377)
 - `png-story`: tall story-format PNG (1080×1920)
-- `mp4`: video with decode animation (1080×1376, 30fps, ~2.2s)
+- `mp4`: video with decode animation (1080×1376, 30fps, ~2.2s) — height rounds down for H.264/yuv420p even-dimension requirement
 - `mp4-story`: tall video with decode animation (1080×1920, 30fps, ~2.2s)
 - `txt`: plain text
 - `ans`: ANSI colored text

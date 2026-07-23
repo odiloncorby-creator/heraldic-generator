@@ -65,6 +65,7 @@ async function encodeVideo(grid, cellW, cellH, outPath) {
       const png = await renderFramePng(grid, frame.cells, cellW, cellH);
       fs.writeFileSync(path.join(tmpDir, `frame-${String(i).padStart(4, '0')}.png`), png);
     }
+    // H.264/yuv420p requires even width/height; input 1377px → 1376px.
     await runFfmpeg(['-y', '-framerate', String(VIDEO_FPS), '-i', path.join(tmpDir, 'frame-%04d.png'), '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2', '-pix_fmt', 'yuv420p', outPath]);
   } catch (err) {
     fs.rmSync(outPath, { force: true });
