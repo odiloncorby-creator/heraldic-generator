@@ -19,18 +19,20 @@ const BANNER = `▗▖ ▗▖▗▄▄▄▖▗▄▄▖  ▗▄▖ ▗▖   ▗
 ▐▌ ▐▌▐▙▄▄▖▐▌ ▐▌▐▌ ▐▌▐▙▄▄▖▐▙▄▄▀▗▄█▄▖▝▚▄▄▖
 CLI v0.2.1 — tape /help`;
 
-const EXPORT_FORMATS = ['png', 'png-story', 'mp4', 'mp4-story', 'txt', 'ans', 'svg'];
+const EXPORT_FORMATS = ['png', 'png-story', 'png-clean', 'png-clean-story', 'mp4', 'mp4-story', 'mp4-clean', 'mp4-clean-story', 'txt', 'ans', 'svg'];
 const STORY_HEIGHT = 1920;
 
-function svgOptsFor(grid, story) {
-  return story ? { canvasH: STORY_HEIGHT } : undefined;
+function svgOptsFor(grid, story, clean) {
+  const opts = { seedLine: !clean };
+  if (story) opts.canvasH = STORY_HEIGHT;
+  return opts;
 }
 
 const VIDEO_FPS = 30;
 const VIDEO_HOLD_MS = 1200;
 
-async function renderFramePng(grid, cells, cellW, cellH, canvasH) {
-  const svg = serializeSvg({ cols: grid.cols, rows: grid.rows, cells, meta: grid.meta }, { cellW, cellH, canvasH });
+async function renderFramePng(grid, cells, cellW, cellH, canvasH, seedLine) {
+  const svg = serializeSvg({ cols: grid.cols, rows: grid.rows, cells, meta: grid.meta }, { cellW, cellH, canvasH, seedLine });
   return serializeSvgToPngBuffer(svg);
 }
 
@@ -53,7 +55,7 @@ function runFfmpeg(args) {
   });
 }
 
-async function encodeVideo(grid, cellW, cellH, outPath, canvasH) {
+async function encodeVideo(grid, cellW, cellH, outPath, canvasH, seedLine) {
   const totalDurationMs = DECODE_STAGGER_MS + DECODE_DURATION_MS + VIDEO_HOLD_MS;
   const totalFrames = Math.ceil(totalDurationMs / (1000 / VIDEO_FPS));
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'heraldic-'));
@@ -62,7 +64,7 @@ async function encodeVideo(grid, cellW, cellH, outPath, canvasH) {
     for (let i = 0; i < totalFrames; i++) {
       const t = i * (1000 / VIDEO_FPS);
       const frame = computeDecodeFrame(grid, t, rng);
-      const png = await renderFramePng(grid, frame.cells, cellW, cellH, canvasH);
+      const png = await renderFramePng(grid, frame.cells, cellW, cellH, canvasH, seedLine);
       fs.writeFileSync(path.join(tmpDir, `frame-${String(i).padStart(4, '0')}.png`), png);
     }
     // H.264/yuv420p requires even width/height; input 1377px → 1376px.
@@ -80,6 +82,7 @@ function makeEntropy() {
 }
 
 let currentText = '';
+let currentEntropy = null;
 let pendingExport = Promise.resolve();
 let currentGrid = null;
 let quitting = false;
@@ -121,6 +124,7 @@ function playDecodeAnimation(grid, myGeneration) {
 
 async function generate(text, entropy) {
   currentText = text;
+  currentEntropy = entropy;
   currentGrid = buildGrid(text, entropy);
   generation += 1;
   pendingGenerate = playDecodeAnimation(currentGrid, generation);
@@ -136,21 +140,24 @@ function requireGrid() {
 }
 
 async function runExport(fmt) {
-  const story = fmt.endsWith('-story');
-  const suffix = story ? '-story' : '';
-  const filename = `${slugify(currentText)}${suffix}.${fmt.replace('-story', '')}`;
+  const clean = fmt.includes('-clean');
+  const story = fmt.includes('-story');
+  const suffix = (clean ? '-clean' : '') + (story ? '-story' : '');
+  const ext = fmt.replace('-clean', '').replace('-story', '');
+  const filename = `${slugify(currentText)}${suffix}.${ext}`;
+  const grid = clean ? buildGrid(currentText, currentEntropy, { clean: true }) : currentGrid;
   if (fmt === 'txt') {
-    fs.writeFileSync(filename, serializeText(currentGrid));
+    fs.writeFileSync(filename, serializeText(grid));
   } else if (fmt === 'ans') {
-    fs.writeFileSync(filename, serializeAnsi(currentGrid));
+    fs.writeFileSync(filename, serializeAnsi(grid));
   } else if (fmt === 'svg') {
-    fs.writeFileSync(filename, serializeSvg(currentGrid));
-  } else if (fmt === 'png' || fmt === 'png-story') {
-    const buffer = await serializeSvgToPngBuffer(serializeSvg(currentGrid, svgOptsFor(currentGrid, story)));
+    fs.writeFileSync(filename, serializeSvg(grid));
+  } else if (ext === 'png') {
+    const buffer = await serializeSvgToPngBuffer(serializeSvg(grid, svgOptsFor(grid, story, clean)));
     fs.writeFileSync(filename, buffer);
-  } else if (fmt === 'mp4' || fmt === 'mp4-story') {
+  } else if (ext === 'mp4') {
     const canvasH = story ? STORY_HEIGHT : undefined;
-    await encodeVideo(currentGrid, 13.5, 27, filename, canvasH);
+    await encodeVideo(grid, 13.5, 27, filename, canvasH, !clean);
   }
   console.log(`écrit: ${filename}`);
 }
@@ -172,7 +179,7 @@ const COMMANDS = {
       'commandes disponibles :',
       '  <texte>              génère un blason à partir du texte',
       '  /reroll               nouveau tirage du même texte',
-      '  /export <fmt>         exporte le dernier blason (fmt: png, png-story, mp4, mp4-story, txt, ans, svg)',
+      '  /export <fmt>         exporte le dernier blason (fmt: png, png-story, png-clean, png-clean-story, mp4, mp4-story, mp4-clean, mp4-clean-story, txt, ans, svg)',
       '  /clear                 vide l’écran',
       '  /quit                  quitte le programme',
       '  /help                  affiche cette liste',

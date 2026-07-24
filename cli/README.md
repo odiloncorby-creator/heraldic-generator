@@ -70,8 +70,12 @@ This requires the `ffmpeg` system binary — install with `brew install ffmpeg`
 Supported export formats:
 - `png`: single frame PNG (1080×1377)
 - `png-story`: tall story-format PNG (1080×1920) — same 1080×1377 render as `png`, letterboxed (centered, black margins top/bottom) rather than stretched
+- `png-clean`: motif only, no decorative frame, no SEED metadata line (1080×1350)
+- `png-clean-story`: `png-clean` render (1080×1350), letterboxed in a 1080×1920 canvas
 - `mp4`: video with decode animation (1080×1376, 30fps, ~2.2s) — height rounds down for H.264/yuv420p even-dimension requirement
 - `mp4-story`: tall video with decode animation (1080×1920, 30fps, ~2.2s) — same letterbox treatment as `png-story`
+- `mp4-clean`: motif-only video, no frame, no SEED line (1080×1350, already even — no H.264 rounding)
+- `mp4-clean-story`: `mp4-clean` render, letterboxed in a 1080×1920 canvas
 - `txt`: plain text
 - `ans`: ANSI colored text
 - `svg`: scalable vector
